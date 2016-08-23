@@ -1,0 +1,3 @@
+# microservice specific routes
+
+POST                    /org/:org/subscribe                  controllers.AtedSubscriptionController.subscribe(org: String)
