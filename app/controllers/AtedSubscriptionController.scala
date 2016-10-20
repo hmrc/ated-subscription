@@ -47,3 +47,8 @@ trait AtedSubscriptionController extends BaseController {
 object AtedSubscriptionController extends AtedSubscriptionController {
   val subscribeService: SubscribeService = SubscribeService
 }
+
+object AgentAtedSubscriptionController extends AtedSubscriptionController {
+  val subscribeService: SubscribeService = SubscribeService
+}
+
