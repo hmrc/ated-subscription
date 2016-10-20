@@ -17,6 +17,7 @@
 package uk.gov.hmrc.controllers
 
 import controllers.AtedSubscriptionController
+import controllers.AgentAtedSubscriptionController
 import org.mockito.Matchers
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
@@ -84,6 +85,7 @@ class AtedSubscriptionControllerSpec extends PlaySpec with OneServerPerSuite wit
   "AtedSubscriptionController" must {
     "use correct SubscribeService" in {
       AtedSubscriptionController.subscribeService must be(SubscribeService)
+      AgentAtedSubscriptionController.subscribeService must be(SubscribeService)
     }
 
     "subscribe" must {

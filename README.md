@@ -11,16 +11,19 @@ This service provides the ability for uk-based or non-UK based ated clients to s
 
 The request must be a valid json for below uri
 - POST    /org/:org/subscribe: Subscribe to ated
+- POST    /agent/:ac/subscribe: Subscribe a NON-UK based client to ated via agent
 
 Where:
 
 | Parameter | Message    |
 |:--------:|-------------|
-|   org    | Org-Id |
+|   org    | Org-Id      |
+|   ac     | AgentCode   |
 
 ####Example of usage for individual or Agent
 
  POST /org/123456789/subscribe
+ POST /agent/123456789/subscribe
 
  **Request body**
  
