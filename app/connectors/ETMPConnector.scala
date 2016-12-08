@@ -80,8 +80,8 @@ trait ETMPConnector extends ServicesConfig with RawResponseReads with Auditable 
         "safeId" -> s"$safeId",
         "request" -> s"$data",
         "responseStatus" -> s"${response.status}",
-        "responseBody" -> s"${response.body}"),
-      eventType = eventType)
+        "responseBody" -> s"${response.body}",
+        "status" -> s"$eventType"))
   }
 
   def createHeaderCarrier(): HeaderCarrier = {
