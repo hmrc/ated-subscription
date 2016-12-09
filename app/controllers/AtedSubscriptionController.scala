@@ -30,8 +30,6 @@ trait AtedSubscriptionController extends BaseController {
   def subscribe(orgId: String) = Action.async { implicit request =>
     val jsonData = request.body.asJson.get
     subscribeService.subscribe(jsonData) map { returnedResponse =>
-      Logger.info(s"[AtedSubscriptionController][subscribe] - requestJson - $jsonData and " +
-        s"returnedResponse.body = ${returnedResponse.body} and status = ${returnedResponse.status}")
       returnedResponse.status match {
         case OK => Ok(returnedResponse.body)
         case BAD_REQUEST => BadRequest(returnedResponse.body)

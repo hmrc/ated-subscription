@@ -71,8 +71,8 @@ trait GovernmentGatewayAdminConnector extends ServicesConfig with RawResponseRea
       detail = Map("txName" -> "ggAddKnownFactsCall",
         "facts" -> s"${input.facts}",
         "responseStatus" -> s"${response.status}",
-        "responseBody" -> s"${response.body}"),
-      eventType = eventType)
+        "responseBody" -> s"${response.body}",
+        "status" -> s"$eventType"))
   }
 }
 
