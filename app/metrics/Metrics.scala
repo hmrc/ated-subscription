@@ -18,8 +18,8 @@ package metrics
 
 import com.codahale.metrics.Timer
 import com.codahale.metrics.Timer.Context
-import com.kenshoo.play.metrics.MetricsRegistry
 import metrics.MetricsEnum.MetricsEnum
+import uk.gov.hmrc.play.graphite.MicroserviceMetrics
 
 trait Metrics {
 
@@ -29,23 +29,25 @@ trait Metrics {
 
 }
 
-object Metrics extends Metrics {
+object Metrics extends Metrics with MicroserviceMetrics {
+
+  val registry = metrics.defaultRegistry
 
   val timers = Map(
-    MetricsEnum.GgAdminAddKnownFacts -> MetricsRegistry.defaultRegistry.timer("gga-add-known-facts-client-response-timer"),
-    MetricsEnum.EtmpSubscribeAted -> MetricsRegistry.defaultRegistry.timer("etmp-subscribe-client-response-timer")
+    MetricsEnum.GgAdminAddKnownFacts -> registry.timer("gga-add-known-facts-client-response-timer"),
+    MetricsEnum.EtmpSubscribeAted -> registry.timer("etmp-subscribe-client-response-timer")
 
   )
 
   val successCounters = Map(
-    MetricsEnum.GgAdminAddKnownFacts -> MetricsRegistry.defaultRegistry.counter("gga-add-known-facts-client-success-counter"),
-    MetricsEnum.EtmpSubscribeAted -> MetricsRegistry.defaultRegistry.counter("etmp-subscribe-client-returns-success-counter")
+    MetricsEnum.GgAdminAddKnownFacts -> registry.counter("gga-add-known-facts-client-success-counter"),
+    MetricsEnum.EtmpSubscribeAted -> registry.counter("etmp-subscribe-client-returns-success-counter")
 
   )
 
   val failedCounters = Map(
-    MetricsEnum.GgAdminAddKnownFacts -> MetricsRegistry.defaultRegistry.counter("gga-add-known-facts-client-failed-counter"),
-    MetricsEnum.EtmpSubscribeAted -> MetricsRegistry.defaultRegistry.counter("etmp-subscribe-client-returns-failed-counter")
+    MetricsEnum.GgAdminAddKnownFacts -> registry.counter("gga-add-known-facts-client-failed-counter"),
+    MetricsEnum.EtmpSubscribeAted -> registry.counter("etmp-subscribe-client-returns-failed-counter")
   )
 
   override def startTimer(api: MetricsEnum): Context = timers(api).time()

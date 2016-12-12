@@ -57,7 +57,7 @@ trait SubscribeService {
 
   private def createKnownFacts(response: HttpResponse, data: JsValue) = {
     val json = response.json
-    val atedRefNumber = (json \ "atedRefNumber").as[Option[String]]
+    val atedRefNumber = (json \ "atedRefNumber").asOpt[String]
     if (atedRefNumber.isEmpty) {
       Logger.warn(s"[SubscribeService][createKnownFacts] - atedRefNumber not returned from etmp subscribe")
     }
