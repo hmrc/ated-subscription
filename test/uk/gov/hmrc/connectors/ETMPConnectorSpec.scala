@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 HM Revenue & Customs
+ * Copyright 2017 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,6 +108,25 @@ class ETMPConnectorSpec extends PlaySpec with OneServerPerSuite with MockitoSuga
       """.stripMargin
     )
 
+    val inputJsonNoPostcode = Json.parse(
+      """
+        |{
+        |  "safeId": "XE0001234567890",
+        |  "address": {
+        |    "addressLine1": "address-line-1",
+        |    "addressLine2": "address-line-2",
+        |    "countryCode": "GB"
+        |  },
+        |  "contactDetails": {
+        |    "telephone": "0123456789",
+        |    "mobile": "0123456789",
+        |    "fax": "0123456789",
+        |    "email": "aa@aa.com"
+        |  }
+        |}
+      """.stripMargin
+    )
+
     "use correct metrics" in {
       ETMPConnector.metrics must be(Metrics)
     }
@@ -116,6 +135,13 @@ class ETMPConnectorSpec extends PlaySpec with OneServerPerSuite with MockitoSuga
       implicit val hc = new HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
       when(mockWSHttp.POST[JsValue, HttpResponse](Matchers.any(), Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any(), Matchers.any())).thenReturn(Future.successful(HttpResponse(OK, responseJson = Some(succesfulSubscribeJson))))
       val result = TestETMPConnector.subscribeAted(inputJson)
+      await(result).json must be(succesfulSubscribeJson)
+    }
+
+    "for successful subscription, return subscription response and uadit internation address" in {
+      implicit val hc = new HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
+      when(mockWSHttp.POST[JsValue, HttpResponse](Matchers.any(), Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any(), Matchers.any())).thenReturn(Future.successful(HttpResponse(OK, responseJson = Some(succesfulSubscribeJson))))
+      val result = TestETMPConnector.subscribeAted(inputJsonNoPostcode)
       await(result).json must be(succesfulSubscribeJson)
     }
 
