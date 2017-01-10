@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 HM Revenue & Customs
+ * Copyright 2017 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import config.{MicroserviceAuditConnector, WSHttp}
 import metrics.{Metrics, MetricsEnum}
 import play.api.Logger
 import play.api.http.Status._
-import play.api.libs.json.JsValue
+import play.api.libs.json.{JsString, JsValue}
 import uk.gov.hmrc.play.audit.model.{Audit, EventTypes}
 import uk.gov.hmrc.play.config.{AppName, ServicesConfig}
 import uk.gov.hmrc.play.http.logging.Authorization
@@ -82,6 +82,24 @@ trait ETMPConnector extends ServicesConfig with RawResponseReads with Auditable 
         "responseStatus" -> s"${response.status}",
         "responseBody" -> s"${response.body}",
         "status" -> s"$eventType"))
+
+    def getAddressPiece(piece: Option[JsValue]):String = {
+      if (piece.isDefined)
+        piece.get.toString()
+      else
+        ""
+    }
+
+    val postcodeOption = (data \\ "postalCode").headOption
+
+    sendDataEvent(transactionName = if (postcodeOption.isDefined) "manualAddressSubmitted" else "internationalAddressSubmitted",
+      detail = Map(
+        "submittedLine1" -> (data \\ "addressLine1").head.as[String],
+        "submittedLine2" -> (data \\ "addressLine2").head.as[String],
+        "submittedLine3" -> getAddressPiece((data \\ "addressLine3").headOption),
+        "submittedLine4" -> getAddressPiece((data \\ "addressLine4").headOption),
+        "submittedPostcode" -> getAddressPiece((data \\ "postalCode").headOption),
+        "submittedCountry" -> (data \\ "countryCode").head.as[String]))
   }
 
   def createHeaderCarrier(): HeaderCarrier = {
