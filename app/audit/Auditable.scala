@@ -45,7 +45,6 @@ trait Auditable {
     val auditDetails = Map("request" -> request,
                            "response" -> response)
 
-    val tags = AuditExtensions.auditHeaderCarrier(hc).toAuditTags(auditType, "N/A")
-    sendDataEvent(auditType, "N/A", tags, auditDetails)
+    sendDataEvent(auditType, detail = auditDetails)
   }
 }
