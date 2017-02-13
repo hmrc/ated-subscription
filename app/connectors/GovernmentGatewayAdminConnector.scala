@@ -56,7 +56,8 @@ trait GovernmentGatewayAdminConnector extends ServicesConfig with RawResponseRea
             response
           case status =>
             metrics.incrementFailedCounter(MetricsEnum.GgAdminAddKnownFacts)
-            Logger.warn(s"[GovernmentGatewayAdminConnector][addKnownFacts] - status: $status Error ${response.body}")
+            Logger.warn(s"[GovernmentGatewayAdminConnector][addKnownFacts] - status: $status")
+            doFailedAudit("addKnownFactsFailed", jsonData.toString, response.body)
             response
         }
     }

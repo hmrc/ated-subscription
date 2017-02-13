@@ -60,7 +60,8 @@ trait ETMPConnector extends ServicesConfig with RawResponseReads with Auditable 
             response
           case status =>
             metrics.incrementFailedCounter(MetricsEnum.EtmpSubscribeAted)
-            Logger.warn(s"[ETMPConnector][subscribeAted] - status: $status Error ${response.body}")
+            Logger.warn(s"[ETMPConnector][subscribeAted] - status: $status")
+            doFailedAudit("subscribeAtedFailed", data.toString, response.body)
             response
         }
     }
