@@ -41,4 +41,10 @@ trait Auditable {
       )
     )
 
+  def doFailedAudit(auditType: String, request: String, response: String)(implicit hc:HeaderCarrier): Unit = {
+    val auditDetails = Map("request" -> request,
+                           "response" -> response)
+
+    sendDataEvent(auditType, detail = auditDetails)
+  }
 }
