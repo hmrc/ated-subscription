@@ -59,12 +59,15 @@ trait SubscribeService {
     val json = response.json
     val atedRefNumber = (json \ "atedRefNumber").asOpt[String]
     if (atedRefNumber.isEmpty) {
-      Logger.warn(s"[SubscribeService][createKnownFacts] - atedRefNumber not returned from etmp subscribe")
+      throw new RuntimeException("[SubscribeService][createKnownFacts] - atedRefNumber not returned from etmp subscribe")
     }
-    val safeId = (data \ "safeId").as[String]
+
+    val utr = (data \ "utr").as[String]
+    val postalCode = (data \ "address" \ "postalCode").as[String]
     val knownFact1 = atedRefNumber.map(atedRef => KnownFact(GovernmentGatewayConstants.AtedReferenceNoType, atedRef))
-    val knownFact2 = Some(KnownFact(GovernmentGatewayConstants.SafeId, safeId))
-    val knownFacts = List(knownFact1, knownFact2).flatten
+    val knownFact2 = Some(KnownFact(GovernmentGatewayConstants.PostalCode, postalCode))
+    val knownFact3 = Some(KnownFact(GovernmentGatewayConstants.CTUTR, utr))
+    val knownFacts = List(knownFact1, knownFact2, knownFact3).flatten
     KnownFactsForService(knownFacts)
   }
 }

@@ -27,7 +27,7 @@ import org.scalatestplus.play.{OneServerPerSuite, PlaySpec}
 import play.api.libs.json.Json
 import play.api.test.Helpers._
 import services.SubscribeService
-import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.play.http.{BadRequestException, HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.http.logging.SessionId
 
 import scala.concurrent.Future
@@ -97,22 +97,21 @@ class SubscribeServiceSpec extends PlaySpec with OneServerPerSuite with MockitoS
     "subscribe when we are passed valid json" in {
 
       when(mockEtmpConnector.subscribeAted(Matchers.any())(Matchers.any())).thenReturn(Future.successful(HttpResponse(OK, Some(successResponse))))
-      when(mockggAdminConnector.addKnownFacts(Matchers.any())(Matchers.any())).thenReturn(Future.successful(HttpResponse(OK, Some(successResponse))))
+      when(mockggAdminConnector.addKnownFacts(Matchers.any())(Matchers.any())).thenReturn(Future.successful(HttpResponse(OK)))
       val result = TestSubscribeServiceSpec.subscribe(inputJson)
       val response = await(result)
       response.status must be(OK)
       response.json must be(successResponse)
     }
 
-    "subscribe when we are passed valid json with no ated ref" in {
+    "throw exception when we are passed valid json with no ated ref" in {
 
       val successResponseNoAted = Json.parse( """{"processingDate": "2001-12-17T09:30:47Z", "formBundleNumber": "123456789012345"}""")
       when(mockEtmpConnector.subscribeAted(Matchers.any())(Matchers.any())).thenReturn(Future.successful(HttpResponse(OK, Some(successResponseNoAted))))
-      when(mockggAdminConnector.addKnownFacts(Matchers.any())(Matchers.any())).thenReturn(Future.successful(HttpResponse(OK, Some(successResponse))))
+      when(mockggAdminConnector.addKnownFacts(Matchers.any())(Matchers.any())).thenReturn(Future.successful(HttpResponse(OK)))
       val result = TestSubscribeServiceSpec.subscribe(inputJson)
-      val response = await(result)
-      response.status must be(OK)
-      response.json must be(successResponseNoAted)
+      val thrown = the[RuntimeException] thrownBy await(result)
+      thrown.getMessage must include("atedRefNumber not returned from etmp subscribe" )
     }
 
 
