@@ -20,5 +20,6 @@ object GovernmentGatewayConstants {
 
   val AtedServiceName = "HMRC-ATED-ORG"
   val AtedReferenceNoType = "ATEDRefNumber"
-  val SafeId = "SAFEID"
+  val PostalCode = "postalCode"
+  val CTUTR = "CTUTR"
 }
