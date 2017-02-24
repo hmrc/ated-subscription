@@ -64,7 +64,8 @@ class SubscribeServiceSpec extends PlaySpec with OneServerPerSuite with MockitoS
         |    "mobile": "07782565326",
         |    "fax": "01332754256",
         |    "email": "aa@aa.com"
-        |  }
+        |  },
+        |  "utr":"12345"
         |}
       """.stripMargin
     )
