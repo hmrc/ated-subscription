@@ -71,7 +71,7 @@ trait SubscribeService {
 
     val utr = (data \ "utr").asOpt[String]
     val postalCode = (data \\ "postalCode")
-    if (postalCode.isEmpty && utr.isEmpty) {
+    if (postalCode.isEmpty && utr.map(_.isEmpty).getOrElse(true)) {
       throw new RuntimeException("[SubscribeService][createKnownFacts] - postalCode or utr must be supplied " + data)
     }
 
