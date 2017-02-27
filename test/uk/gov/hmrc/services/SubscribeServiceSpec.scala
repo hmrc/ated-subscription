@@ -47,26 +47,60 @@ class SubscribeServiceSpec extends PlaySpec with OneServerPerSuite with MockitoS
     reset(mockEtmpConnector)
   }
 
+
+  val inputJson = Json.parse(
+    """
+      |{"acknowledgementReference":"Tp0x8ql6GldqGyGh6u36149378018603",
+      |"safeId":"XE0001234567890",
+      |"emailConsent":false,
+      |"address":[
+      | {
+      |   "name1":"Paul",
+      |    "name2":"Carrielies",
+      |    "addressDetails": {
+      |      "addressLine1": "100 SuttonStreet",
+      |      "addressLine2": "Wokingham",
+      |      "postalCode": "AB12CD",
+      |      "countryCode": "GB"
+      |    },
+      |    "contactDetails": {
+      |      "telephone": "01332752856",
+      |      "mobile": "07782565326",
+      |      "fax": "01332754256",
+      |      "email": "aa@aa.com"
+      |    }
+      | }],
+      | "utr":"12345",
+      | "isNonUKClientRegisteredByAgent": false}
+      |
+    """.stripMargin
+  )
+
   "SubscribeService" must {
 
-    val inputJson = Json.parse(
+    val inputJsonNoPostalCodeOrUtr = Json.parse(
       """
-        |{
-        |  "safeId": "XE0001234567890",
-        |  "address": {
-        |    "addressLine1": "100 SuttonStreet",
-        |    "addressLine2": "Wokingham",
-        |    "postalCode": "AB12CD",
-        |    "countryCode": "GB"
-        |  },
-        |  "contactDetails": {
-        |    "telephone": "01332752856",
-        |    "mobile": "07782565326",
-        |    "fax": "01332754256",
-        |    "email": "aa@aa.com"
-        |  },
-        |  "utr":"12345"
-        |}
+        |{"acknowledgementReference":"Tp0x8ql6GldqGyGh6u36149378018603",
+        |"safeId":"XE0001234567890",
+        |"emailConsent":false,
+        |"address":[
+        | {
+        |   "name1":"Paul",
+        |    "name2":"Carrielies",
+        |    "addressDetails": {
+        |      "addressLine1": "100 SuttonStreet",
+        |      "addressLine2": "Wokingham",
+        |      "countryCode": "GB"
+        |    },
+        |    "contactDetails": {
+        |      "telephone": "01332752856",
+        |      "mobile": "07782565326",
+        |      "fax": "01332754256",
+        |      "email": "aa@aa.com"
+        |    }
+        | }],
+        | "utr":""}
+        |
       """.stripMargin
     )
 
@@ -105,6 +139,50 @@ class SubscribeServiceSpec extends PlaySpec with OneServerPerSuite with MockitoS
       response.json must be(successResponse)
     }
 
+    "subscribe without adding known facts if this is isNonUKClientRegisteredByAgent" in {
+      val inputJsonNoKnownFacts = Json.parse(
+        """
+          |{"acknowledgementReference":"Tp0x8ql6GldqGyGh6u36149378018603",
+          |"safeId":"XE0001234567890",
+          |"emailConsent":false,
+          |"address":[
+          | {
+          |   "name1":"Paul",
+          |    "name2":"Carrielies",
+          |    "addressDetails": {
+          |      "addressLine1": "100 SuttonStreet",
+          |      "addressLine2": "Wokingham",
+          |      "countryCode": "GB"
+          |    },
+          |    "contactDetails": {
+          |      "telephone": "01332752856",
+          |      "mobile": "07782565326",
+          |      "fax": "01332754256",
+          |      "email": "aa@aa.com"
+          |    }
+          | }],
+          | "isNonUKClientRegisteredByAgent": true}
+          |
+        """.stripMargin
+      )
+
+      when(mockEtmpConnector.subscribeAted(Matchers.any())(Matchers.any())).thenReturn(Future.successful(HttpResponse(OK, Some(successResponse))))
+      val result = TestSubscribeServiceSpec.subscribe(inputJsonNoKnownFacts)
+      val response = await(result)
+      response.status must be(OK)
+      response.json must be(successResponse)
+    }
+
+
+    "throw exception when we are passed valid json with no postal code or utr" in {
+
+      when(mockEtmpConnector.subscribeAted(Matchers.any())(Matchers.any())).thenReturn(Future.successful(HttpResponse(OK, Some(successResponse))))
+      when(mockggAdminConnector.addKnownFacts(Matchers.any())(Matchers.any())).thenReturn(Future.successful(HttpResponse(OK)))
+      val result = TestSubscribeServiceSpec.subscribe(inputJsonNoPostalCodeOrUtr)
+      val thrown = the[RuntimeException] thrownBy await(result)
+      thrown.getMessage must include("postalCode or utr must be supplied" )
+    }
+
     "throw exception when we are passed valid json with no ated ref" in {
 
       val successResponseNoAted = Json.parse( """{"processingDate": "2001-12-17T09:30:47Z", "formBundleNumber": "123456789012345"}""")
@@ -134,5 +212,51 @@ class SubscribeServiceSpec extends PlaySpec with OneServerPerSuite with MockitoS
       response.status must be(OK)
       response.json must be(successResponse)
     }
+  }
+
+  "stripUtr" must {
+    val strippedJson = Json.parse(
+      """
+        |{"acknowledgementReference":"Tp0x8ql6GldqGyGh6u36149378018603",
+        |"safeId":"XE0001234567890",
+        |"emailConsent":false,
+        |"address":[
+        | {
+        |   "name1":"Paul",
+        |    "name2":"Carrielies",
+        |    "addressDetails": {
+        |      "addressLine1": "100 SuttonStreet",
+        |      "addressLine2": "Wokingham",
+        |      "postalCode": "AB12CD",
+        |      "countryCode": "GB"
+        |    },
+        |    "contactDetails": {
+        |      "telephone": "01332752856",
+        |      "mobile": "07782565326",
+        |      "fax": "01332754256",
+        |      "email": "aa@aa.com"
+        |    }
+        | }]
+        | }
+        |
+      """.stripMargin
+    )
+
+
+    "return the normal json if we don't have a utr" in {
+
+      val utr = (strippedJson \ "utr").asOpt[String]
+      utr.isDefined must be(false)
+
+      TestSubscribeServiceSpec.stripUtr(strippedJson) must be (strippedJson)
+    }
+
+    "strip the utr if we have one" in {
+      val utr = (inputJson \ "utr").asOpt[String]
+      utr.isDefined must be(true)
+
+      TestSubscribeServiceSpec.stripUtr(inputJson) must be (strippedJson)
+    }
+
   }
 }
