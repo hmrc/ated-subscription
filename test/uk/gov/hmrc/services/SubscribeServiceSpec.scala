@@ -259,4 +259,77 @@ class SubscribeServiceSpec extends PlaySpec with OneServerPerSuite with MockitoS
     }
 
   }
+
+  "getPostCode" must {
+    "return None if we have no Post Code" in {
+      val postCodeJson = Json.parse(
+        """
+          |{
+          |"address":[
+          | {
+          |    "addressDetails": {
+          |    }
+          | }]
+          | }
+          |
+        """.stripMargin
+      )
+      TestSubscribeServiceSpec.getPostcode(postCodeJson).isDefined must be (false)
+    }
+
+    "return None if we have an empty  Post Code" in {
+      val postCodeJson = Json.parse(
+        """
+          |{
+          |"address":[
+          | {
+          |    "addressDetails": {
+          |      "postalCode": ""
+          |    }
+          | }]
+          | }
+          |
+        """.stripMargin
+      )
+      TestSubscribeServiceSpec.getPostcode(postCodeJson).isDefined must be (false)
+    }
+
+    "return the post code if we have one" in {
+      val postCodeJson = Json.parse(
+        """
+          |{
+          |"address":[
+          | {
+          |    "addressDetails": {
+          |      "postalCode": "AB12CD"
+          |    }
+          | }]
+          | }
+          |
+        """.stripMargin
+      )
+      TestSubscribeServiceSpec.getPostcode(postCodeJson) must be (Some("AB12CD"))
+    }
+
+    "return the first post code if we have two" in {
+      val postCodeJson = Json.parse(
+        """
+          |{
+          |"address":[
+          | {
+          |    "addressDetails": {
+          |      "postalCode": "AB12CD"
+          |    }
+          | }, {
+          |    "addressDetails": {
+          |      "postalCode": "AB13CD"
+          |    }
+          | }]
+          | }
+          |
+        """.stripMargin
+      )
+      TestSubscribeServiceSpec.getPostcode(postCodeJson) must be (Some("AB12CD"))
+    }
+  }
 }
