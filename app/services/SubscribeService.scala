@@ -20,7 +20,7 @@ import connectors.{ETMPConnector, GovernmentGatewayAdminConnector}
 import models.{KnownFact, KnownFactsForService}
 import play.api.Logger
 import play.api.http.Status._
-import play.api.libs.json.JsValue
+import play.api.libs.json.{JsObject, JsValue}
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
 import utils.GovernmentGatewayConstants
 
@@ -39,9 +39,8 @@ trait SubscribeService {
   def ggAdminConnector: GovernmentGatewayAdminConnector
 
   def subscribe(data: JsValue)(implicit hc: HeaderCarrier) = {
-
     for {
-      submitResponse <- etmpConnector.subscribeAted(data)
+      submitResponse <- etmpConnector.subscribeAted(stripUtr(data))
       _ <- addKnownFacts(submitResponse, data)
     } yield {
       submitResponse
@@ -49,24 +48,36 @@ trait SubscribeService {
   }
 
   private def addKnownFacts(response: HttpResponse, data: JsValue)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
-    response.status match {
-      case OK => ggAdminConnector.addKnownFacts(createKnownFacts(response, data))
-      case _ => Future.successful(response)
+    val isNonUKClientRegisteredByAgent = (data \ "isNonUKClientRegisteredByAgent").asOpt[Boolean].getOrElse(false)
+    (isNonUKClientRegisteredByAgent, response.status) match {
+      case (false, OK) =>
+        ggAdminConnector.addKnownFacts(createKnownFacts(response, data))
+      case _ =>
+        Future.successful(response)
     }
   }
 
+  def stripUtr(data: JsValue) = {
+    data.as[JsObject] - "utr" - "isNonUKClientRegisteredByAgent"
+  }
+
   private def createKnownFacts(response: HttpResponse, data: JsValue) = {
+
     val json = response.json
     val atedRefNumber = (json \ "atedRefNumber").asOpt[String]
     if (atedRefNumber.isEmpty) {
       throw new RuntimeException("[SubscribeService][createKnownFacts] - atedRefNumber not returned from etmp subscribe")
     }
 
-    val utr = (data \ "utr").as[String]
-    val postalCode = (data \ "address" \ "postalCode").as[String]
+    val utr = (data \ "utr").asOpt[String]
+    val postalCode = (data \\ "postalCode")
+    if (postalCode.isEmpty && utr.isEmpty) {
+      throw new RuntimeException("[SubscribeService][createKnownFacts] - postalCode or utr must be supplied " + data)
+    }
+
     val knownFact1 = atedRefNumber.map(atedRef => KnownFact(GovernmentGatewayConstants.AtedReferenceNoType, atedRef))
-    val knownFact2 = Some(KnownFact(GovernmentGatewayConstants.PostalCode, postalCode))
-    val knownFact3 = Some(KnownFact(GovernmentGatewayConstants.CTUTR, utr))
+    val knownFact2 = postalCode.headOption.map(postCodeFound => KnownFact(GovernmentGatewayConstants.PostalCode, postCodeFound.toString()))
+    val knownFact3 = utr.map(KnownFact(GovernmentGatewayConstants.CTUTR, _))
     val knownFacts = List(knownFact1, knownFact2, knownFact3).flatten
     KnownFactsForService(knownFacts)
   }
