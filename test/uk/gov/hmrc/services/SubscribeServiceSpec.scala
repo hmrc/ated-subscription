@@ -71,7 +71,8 @@ class SubscribeServiceSpec extends PlaySpec with OneServerPerSuite with MockitoS
       |    }
       | }],
       | "utr":"12345",
-      | "isNonUKClientRegisteredByAgent": false}
+      | "isNonUKClientRegisteredByAgent": false,
+      | "knownFactPostcode": "NE1 1EN"}
       |
     """.stripMargin
   )
@@ -248,14 +249,14 @@ class SubscribeServiceSpec extends PlaySpec with OneServerPerSuite with MockitoS
       val utr = (strippedJson \ "utr").asOpt[String]
       utr.isDefined must be(false)
 
-      TestSubscribeServiceSpec.stripUtr(strippedJson) must be (strippedJson)
+      TestSubscribeServiceSpec.stripJsonForEtmp(strippedJson) must be (strippedJson)
     }
 
     "strip the utr if we have one" in {
       val utr = (inputJson \ "utr").asOpt[String]
       utr.isDefined must be(true)
 
-      TestSubscribeServiceSpec.stripUtr(inputJson) must be (strippedJson)
+      TestSubscribeServiceSpec.stripJsonForEtmp(inputJson) must be (strippedJson)
     }
 
   }
@@ -303,33 +304,13 @@ class SubscribeServiceSpec extends PlaySpec with OneServerPerSuite with MockitoS
           |    "addressDetails": {
           |      "postalCode": "AB12CD"
           |    }
-          | }]
+          | }],
+          | "knownFactPostcode":"NE1 1EN"
           | }
           |
         """.stripMargin
       )
-      TestSubscribeServiceSpec.getPostcode(postCodeJson) must be (Some("AB12CD"))
-    }
-
-    "return the first post code if we have two" in {
-      val postCodeJson = Json.parse(
-        """
-          |{
-          |"address":[
-          | {
-          |    "addressDetails": {
-          |      "postalCode": "AB12CD"
-          |    }
-          | }, {
-          |    "addressDetails": {
-          |      "postalCode": "AB13CD"
-          |    }
-          | }]
-          | }
-          |
-        """.stripMargin
-      )
-      TestSubscribeServiceSpec.getPostcode(postCodeJson) must be (Some("AB12CD"))
+      TestSubscribeServiceSpec.getPostcode(postCodeJson) must be (Some("NE1 1EN"))
     }
   }
 }

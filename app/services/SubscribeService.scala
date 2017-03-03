@@ -40,7 +40,7 @@ trait SubscribeService {
 
   def subscribe(data: JsValue)(implicit hc: HeaderCarrier) = {
     for {
-      submitResponse <- etmpConnector.subscribeAted(stripUtr(data))
+      submitResponse <- etmpConnector.subscribeAted(stripJsonForEtmp(data))
       _ <- addKnownFacts(submitResponse, data)
     } yield {
       submitResponse
@@ -57,8 +57,8 @@ trait SubscribeService {
     }
   }
 
-  def stripUtr(data: JsValue) = {
-    data.as[JsObject] - "utr" - "isNonUKClientRegisteredByAgent"
+  def stripJsonForEtmp(data: JsValue) = {
+    data.as[JsObject] - "utr" - "isNonUKClientRegisteredByAgent" - "knownFactPostcode"
   }
 
   def getUtr(data: JsValue) : Option[String] = {
@@ -69,7 +69,7 @@ trait SubscribeService {
   }
 
   def getPostcode(data: JsValue) : Option[String] = {
-    (data \\ "postalCode").headOption.map(_.as[String]) match {
+    (data \ "knownFactPostcode").asOpt[String] match {
       case Some(x) if (!x.trim().isEmpty) => Some(x)
       case _ => None
     }
