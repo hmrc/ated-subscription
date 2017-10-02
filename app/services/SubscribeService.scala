@@ -21,11 +21,11 @@ import models.{KnownFact, KnownFactsForService}
 import play.api.Logger
 import play.api.http.Status._
 import play.api.libs.json.{JsObject, JsValue}
-import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
 import utils.GovernmentGatewayConstants
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
 
 object SubscribeService extends SubscribeService {
   val etmpConnector: ETMPConnector = ETMPConnector

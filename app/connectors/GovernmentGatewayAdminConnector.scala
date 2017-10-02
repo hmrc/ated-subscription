@@ -23,9 +23,9 @@ import models._
 import play.api.Logger
 import play.api.http.Status._
 import play.api.libs.json.{JsValue, Json}
+import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.audit.model.{Audit, EventTypes}
 import uk.gov.hmrc.play.config.{AppName, ServicesConfig}
-import uk.gov.hmrc.play.http.{HeaderCarrier, _}
 import utils.GovernmentGatewayConstants
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -36,7 +36,7 @@ trait GovernmentGatewayAdminConnector extends ServicesConfig with RawResponseRea
 
   def addKnownFactsURI: String
 
-  val http: HttpGet with HttpPost
+  val http: CoreGet with CorePost
 
   def metrics: Metrics
 
