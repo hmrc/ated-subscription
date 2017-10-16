@@ -11,7 +11,6 @@ This service provides the ability for UK-based or Non-UK based ATED clients (or 
 
 The request must be a valid json for below uri
 
-
 | PATH | Supported Methods | Description |
 |------|-------------------|-------------|
 |```/org/:org/subscribe ``` | POST | subscribe to ATED|
@@ -65,6 +64,7 @@ Where:
    "formBundleNumber": "123456789012345"
  }
   ```
+  
 | Parameter | Message    |
 |:--------:|-------------|
 |   atedRefNumber  | ATED subsciption id for client generated when subscribed |
