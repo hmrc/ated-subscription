@@ -7,7 +7,7 @@ Annual Tax for Enveloped Dwellings Subscription microservice
 
 This service provides the ability for UK-based or Non-UK based ATED clients (or agents on behalf of clients) to subscribe to ATED service on ETMP. They must be registered to ETMP as per the ROSM pattern.
 
-###Subscribe to ATED
+### Subscribe to ATED
 
 The request must be a valid json for below uri
 
@@ -23,7 +23,7 @@ Where:
 |   org    | Org-Id      |
 |   ac     | AgentCode   |
 
-####Example of usage for individual or Agent
+#### Example of usage for individual or Agent
 
  POST /org/123456789/subscribe
  POST /agent/123456789/subscribe
