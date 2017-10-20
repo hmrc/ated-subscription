@@ -25,8 +25,9 @@ Where:
 
 #### Example of usage for individual or Agent
 
- POST /org/123456789/subscribe
- POST /agent/123456789/subscribe
+ ```POST /org/123456789/subscribe```
+ 
+ ```POST /agent/123456789/subscribe```
 
  **Request body**
  
