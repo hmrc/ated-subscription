@@ -16,7 +16,7 @@ The request must be a valid json for below uri
 |```/org/:org/subscribe ``` | POST | subscribe to ATED|
 |```/agent/:ac/subscribe``` | POST | subscribe a NON-UK based client to ATED via agent |
 
-Where:
+where,
 
 | Parameter | Message    |
 |:--------:|-------------|
