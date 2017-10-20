@@ -55,7 +55,15 @@ Where:
   ]
 }
   ```
-  **Response body**
+  **Response**
+  
+ | Status | Message     |
+ |-------|-------------|
+ | 200   | Ok          |
+ | 400   | Bad Request |
+ | 404   | Not Found   |
+ | 500   | Internal Server Error |
+ | 503   | Service Unavailable |
  
   ```json
  {
@@ -71,4 +79,7 @@ Where:
 
 ### License
 
-This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html").
+
+This code is open source software licensed under the [Apache 2.0 License].
+
+[Apache 2.0 License]: http://www.apache.org/licenses/LICENSE-2.0.html
