@@ -63,6 +63,8 @@ trait GovernmentGatewayAdminConnector extends ServicesConfig with RawResponseRea
     }
   }
 
+
+
   private def auditAddKnownFactsCall(input: KnownFactsForService, response: HttpResponse)(implicit hc: HeaderCarrier) = {
     val eventType = response.status match {
       case OK => EventTypes.Succeeded

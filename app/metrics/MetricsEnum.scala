@@ -21,5 +21,6 @@ object MetricsEnum extends Enumeration {
   type MetricsEnum = Value
   val GgAdminAddKnownFacts = Value
   val EtmpSubscribeAted = Value
+  val EmacAddKnownFacts = Value
 
 }
