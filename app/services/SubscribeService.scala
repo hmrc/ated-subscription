@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package services
 
 import connectors.connectors.TaxEnrolmentsConnector
 import connectors.{ETMPConnector, GovernmentGatewayAdminConnector}
-import models.{KnownFact, KnownFactsForService}
+import models.{KnownFact, KnownFactsForService, Verifier, Verifiers}
 import play.api.http.Status._
 import play.api.libs.json.{JsObject, JsValue}
 import utils.GovernmentGatewayConstants
@@ -26,7 +26,6 @@ import utils.GovernmentGatewayConstants
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-
 import uk.gov.hmrc.play.config.RunMode
 
 object SubscribeService extends SubscribeService {
@@ -59,50 +58,44 @@ trait SubscribeService extends RunMode {
     val isNonUKClientRegisteredByAgent = (data \ "isNonUKClientRegisteredByAgent").asOpt[Boolean].getOrElse(false)
     (isNonUKClientRegisteredByAgent, response.status) match {
       case (false, OK) =>
-        val knownFacts = createKnownFacts(response, data)
         if (isEmacFeatureToggle) {
-          taxEnrolmentsConnector.addKnownFacts(knownFacts, getAtedReference(response))
+          taxEnrolmentsConnector.addKnownFacts(createEnrolmentVerifiers(response, data), getAtedReference(response))
         } else
-          ggAdminConnector.addKnownFacts(knownFacts)
+          ggAdminConnector.addKnownFacts(createKnownFacts(response, data))
       case _ =>
         Future.successful(response)
     }
   }
 
-  def stripJsonForEtmp(data: JsValue) = {
+  private def stripJsonForEtmp(data: JsValue) = {
     data.as[JsObject] - "utr" - "isNonUKClientRegisteredByAgent" - "knownFactPostcode"
   }
 
-  def getUtr(data: JsValue): Option[String] = {
+  private def getUtr(data: JsValue): String = {
     (data \ "utr").asOpt[String] match {
-      case Some(x) if (!x.trim().isEmpty) => Some(x)
-      case _ => None
+      case Some(x) if !x.trim().isEmpty => x
+      case _ => throw new RuntimeException("[SubscribeService][getUtr] - utr must be supplied " + data)
     }
   }
 
-  def getPostcode(data: JsValue): Option[String] = {
+  private def getPostcode(data: JsValue): String = {
     (data \ "knownFactPostcode").asOpt[String] match {
-      case Some(x) if (!x.trim().isEmpty) => Some(x)
-      case _ => None
+      case Some(x) if !x.trim().isEmpty => x
+      case _ => throw new RuntimeException("[SubscribeService][getPostcode] - postcode must be supplied " + data)
     }
   }
 
   private def createKnownFacts(response: HttpResponse, data: JsValue) = {
+    KnownFactsForService(List(KnownFact(GovernmentGatewayConstants.AtedReferenceNoType, getAtedReference(response)),
+      KnownFact(GovernmentGatewayConstants.PostalCode, getPostcode(data)),
+      KnownFact(GovernmentGatewayConstants.CTUTR, getUtr(data))))
+  }
 
-    val atedRefNumber = getAtedReference(response)
+  private def createEnrolmentVerifiers(response: HttpResponse, data: JsValue): Verifiers = {
+    Verifiers(List(Verifier(GovernmentGatewayConstants.AtedReferenceNoType, getAtedReference(response)),
+      Verifier(GovernmentGatewayConstants.PostalCode, getPostcode(data)),
+      Verifier(GovernmentGatewayConstants.CTUTR, getUtr(data))))
 
-    val utr = getUtr(data)
-    val postcode = getPostcode(data)
-
-    if (!postcode.isDefined && !utr.isDefined) {
-      throw new RuntimeException("[SubscribeService][createKnownFacts] - postalCode or utr must be supplied " + data)
-    }
-
-    val knownFact1 = KnownFact(GovernmentGatewayConstants.AtedReferenceNoType, atedRefNumber)
-    val knownFact2 = postcode.headOption.map(KnownFact(GovernmentGatewayConstants.PostalCode, _))
-    val knownFact3 = utr.map(KnownFact(GovernmentGatewayConstants.CTUTR, _))
-    val knownFacts = List(knownFact1, knownFact2, knownFact3).flatten
-    KnownFactsForService(knownFacts)
   }
 
   private def getAtedReference(response: HttpResponse): String = {
