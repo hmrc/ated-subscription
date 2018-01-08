@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,19 +35,22 @@ object Metrics extends Metrics with MicroserviceMetrics {
 
   val timers = Map(
     MetricsEnum.GgAdminAddKnownFacts -> registry.timer("gga-add-known-facts-client-response-timer"),
-    MetricsEnum.EtmpSubscribeAted -> registry.timer("etmp-subscribe-client-response-timer")
+    MetricsEnum.EtmpSubscribeAted -> registry.timer("etmp-subscribe-client-response-timer"),
+    MetricsEnum.EmacAddKnownFacts -> registry.timer("emac-upsert-an-enrolment-response-timer")
 
   )
 
   val successCounters = Map(
     MetricsEnum.GgAdminAddKnownFacts -> registry.counter("gga-add-known-facts-client-success-counter"),
-    MetricsEnum.EtmpSubscribeAted -> registry.counter("etmp-subscribe-client-returns-success-counter")
+    MetricsEnum.EtmpSubscribeAted -> registry.counter("etmp-subscribe-client-returns-success-counter"),
+    MetricsEnum.EmacAddKnownFacts -> registry.counter("emac-upsert-an-enrolment-success-counter")
 
   )
 
   val failedCounters = Map(
     MetricsEnum.GgAdminAddKnownFacts -> registry.counter("gga-add-known-facts-client-failed-counter"),
-    MetricsEnum.EtmpSubscribeAted -> registry.counter("etmp-subscribe-client-returns-failed-counter")
+    MetricsEnum.EtmpSubscribeAted -> registry.counter("etmp-subscribe-client-returns-failed-counter"),
+    MetricsEnum.EmacAddKnownFacts -> registry.counter("emac-upsert-an-enrolment-failed-counter")
   )
 
   override def startTimer(api: MetricsEnum): Context = timers(api).time()

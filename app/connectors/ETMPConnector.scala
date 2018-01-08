@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,6 @@ trait ETMPConnector extends ServicesConfig with RawResponseReads with Auditable 
 
   def subscribeAted(data: JsValue)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
     implicit val hc = createHeaderCarrier
-
     val timerContext = metrics.startTimer(MetricsEnum.EtmpSubscribeAted)
     http.POST[JsValue, HttpResponse](s"$serviceURL/$baseURI/$subscribeUri", data) map {
       response =>
