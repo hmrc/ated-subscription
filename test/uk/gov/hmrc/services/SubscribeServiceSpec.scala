@@ -39,18 +39,23 @@ class SubscribeServiceSpec extends PlaySpec with OneServerPerSuite with MockitoS
   val mockggAdminConnector = mock[GovernmentGatewayAdminConnector]
   val mockTaxEnrolementConnector = mock[TaxEnrolmentsConnector]
 
-  object TestSubscribeServiceSpec extends SubscribeService {
+  object TestSubscribeServiceSpecGG extends SubscribeService {
     override val ggAdminConnector = mockggAdminConnector
     override val etmpConnector = mockEtmpConnector
     override val taxEnrolmentsConnector: TaxEnrolmentsConnector = mockTaxEnrolementConnector
     override val isEmacFeatureToggle: Boolean = false
   }
 
+  object TestSubscribeServiceSpecEMAC extends SubscribeService {
+    override val ggAdminConnector = mockggAdminConnector
+    override val etmpConnector = mockEtmpConnector
+    override val taxEnrolmentsConnector: TaxEnrolmentsConnector = mockTaxEnrolementConnector
+    override val isEmacFeatureToggle: Boolean = true
+  }
 
   override def beforeEach(): Unit = {
     reset(mockEtmpConnector)
   }
-
 
   val inputJson = Json.parse(
     """
@@ -104,6 +109,34 @@ class SubscribeServiceSpec extends PlaySpec with OneServerPerSuite with MockitoS
         |      "email": "aa@aa.com"
         |    }
         | }],
+        | "utr":"",
+        |  "isNonUKClientRegisteredByAgent": false,
+        | "knownFactPostcode": "NE1 1EN"}
+        |
+      """.stripMargin
+    )
+
+    val inputJsonNoUtr = Json.parse(
+      """
+        |{"acknowledgementReference":"Tp0x8ql6GldqGyGh6u36149378018603",
+        |"safeId":"XE0001234567890",
+        |"emailConsent":false,
+        |"address":[
+        | {
+        |   "name1":"Paul",
+        |    "name2":"Carrielies",
+        |    "addressDetails": {
+        |      "addressLine1": "100 SuttonStreet",
+        |      "addressLine2": "Wokingham",
+        |      "countryCode": "GB"
+        |    },
+        |    "contactDetails": {
+        |      "telephone": "01332752856",
+        |      "mobile": "07782565326",
+        |      "fax": "01332754256",
+        |      "email": "aa@aa.com"
+        |    }
+        | }],
         | "utr":""}
         |
       """.stripMargin
@@ -127,18 +160,28 @@ class SubscribeServiceSpec extends PlaySpec with OneServerPerSuite with MockitoS
       """.stripMargin
     )
 
-    implicit val hc = new HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
+    implicit val hc = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
 
     "use the correct connectors" in {
       SubscribeService.ggAdminConnector must be(GovernmentGatewayAdminConnector)
       SubscribeService.etmpConnector must be(ETMPConnector)
     }
 
-    "subscribe when we are passed valid json" in {
+    "subscribe when we are passed valid json adding known facts to GG" in {
 
       when(mockEtmpConnector.subscribeAted(Matchers.any())(Matchers.any())).thenReturn(Future.successful(HttpResponse(OK, Some(successResponse))))
       when(mockggAdminConnector.addKnownFacts(Matchers.any())(Matchers.any())).thenReturn(Future.successful(HttpResponse(OK)))
-      val result = TestSubscribeServiceSpec.subscribe(inputJson)
+      val result = TestSubscribeServiceSpecGG.subscribe(inputJson)
+      val response = await(result)
+      response.status must be(OK)
+      response.json must be(successResponse)
+    }
+
+    "subscribe when we are passed valid json doing upsert enrolment in EMAC" in {
+
+      when(mockEtmpConnector.subscribeAted(Matchers.any())(Matchers.any())).thenReturn(Future.successful(HttpResponse(OK, Some(successResponse))))
+      when(mockTaxEnrolementConnector.addKnownFacts(Matchers.any(), Matchers.any())(Matchers.any())).thenReturn(Future.successful(HttpResponse(OK)))
+      val result = TestSubscribeServiceSpecEMAC.subscribe(inputJson)
       val response = await(result)
       response.status must be(OK)
       response.json must be(successResponse)
@@ -172,20 +215,27 @@ class SubscribeServiceSpec extends PlaySpec with OneServerPerSuite with MockitoS
       )
 
       when(mockEtmpConnector.subscribeAted(Matchers.any())(Matchers.any())).thenReturn(Future.successful(HttpResponse(OK, Some(successResponse))))
-      val result = TestSubscribeServiceSpec.subscribe(inputJsonNoKnownFacts)
+      val result = TestSubscribeServiceSpecGG.subscribe(inputJsonNoKnownFacts)
       val response = await(result)
       response.status must be(OK)
       response.json must be(successResponse)
     }
 
 
-    "throw exception when we are passed valid json with no postal code or utr" in {
+    "throw exception when we are passed valid json with no postal code " in {
 
       when(mockEtmpConnector.subscribeAted(Matchers.any())(Matchers.any())).thenReturn(Future.successful(HttpResponse(OK, Some(successResponse))))
-      when(mockggAdminConnector.addKnownFacts(Matchers.any())(Matchers.any())).thenReturn(Future.successful(HttpResponse(OK)))
-      val result = TestSubscribeServiceSpec.subscribe(inputJsonNoPostalCodeOrUtr)
+      val result = TestSubscribeServiceSpecGG.subscribe(inputJsonNoPostalCodeOrUtr)
       val thrown = the[RuntimeException] thrownBy await(result)
-      thrown.getMessage must include("postalCode or utr must be supplied" )
+      thrown.getMessage must include("utr must be supplied " )
+    }
+
+    "throw exception when we are passed valid json with no utr" in {
+
+      when(mockEtmpConnector.subscribeAted(Matchers.any())(Matchers.any())).thenReturn(Future.successful(HttpResponse(OK, Some(successResponse))))
+      val result = TestSubscribeServiceSpecGG.subscribe(inputJsonNoUtr)
+      val thrown = the[RuntimeException] thrownBy await(result)
+      thrown.getMessage must include("postcode must be supplied" )
     }
 
     "throw exception when we are passed valid json with no ated ref" in {
@@ -193,7 +243,7 @@ class SubscribeServiceSpec extends PlaySpec with OneServerPerSuite with MockitoS
       val successResponseNoAted = Json.parse( """{"processingDate": "2001-12-17T09:30:47Z", "formBundleNumber": "123456789012345"}""")
       when(mockEtmpConnector.subscribeAted(Matchers.any())(Matchers.any())).thenReturn(Future.successful(HttpResponse(OK, Some(successResponseNoAted))))
       when(mockggAdminConnector.addKnownFacts(Matchers.any())(Matchers.any())).thenReturn(Future.successful(HttpResponse(OK)))
-      val result = TestSubscribeServiceSpec.subscribe(inputJson)
+      val result = TestSubscribeServiceSpecGG.subscribe(inputJson)
       val thrown = the[RuntimeException] thrownBy await(result)
       thrown.getMessage must include("atedRefNumber not returned from etmp subscribe" )
     }
@@ -202,7 +252,7 @@ class SubscribeServiceSpec extends PlaySpec with OneServerPerSuite with MockitoS
     "respond with BadRequest, when subscription request fails with a Bad request" in {
       when(mockEtmpConnector.subscribeAted(Matchers.any())(Matchers.any()))
         .thenReturn(Future.successful(HttpResponse(BAD_REQUEST, Some(failureResponse))))
-      val result = TestSubscribeServiceSpec.subscribe(inputJson)
+      val result = TestSubscribeServiceSpecGG.subscribe(inputJson)
       val response = await(result)
       response.status must be(BAD_REQUEST)
       response.json must be(failureResponse)
@@ -212,7 +262,7 @@ class SubscribeServiceSpec extends PlaySpec with OneServerPerSuite with MockitoS
       when(mockEtmpConnector.subscribeAted(Matchers.any())(Matchers.any())).thenReturn(Future.successful(HttpResponse(OK, Some(successResponse))))
       when(mockggAdminConnector.addKnownFacts(Matchers.any())(Matchers.any()))
         .thenReturn(Future.successful(HttpResponse(BAD_REQUEST, Some(failureResponse))))
-      val result = TestSubscribeServiceSpec.subscribe(inputJson)
+      val result = TestSubscribeServiceSpecGG.subscribe(inputJson)
       val response = await(result)
       response.status must be(OK)
       response.json must be(successResponse)
