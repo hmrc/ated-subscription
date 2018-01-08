@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 HM Revenue & Customs
+ * Copyright 2018 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package uk.gov.hmrc.services
 
 import java.util.UUID
 
+import connectors.connectors.TaxEnrolmentsConnector
 import connectors.{ETMPConnector, GovernmentGatewayAdminConnector}
 import org.mockito.Matchers
 import org.mockito.Mockito._
@@ -29,17 +30,20 @@ import play.api.test.Helpers._
 import services.SubscribeService
 
 import scala.concurrent.Future
-import uk.gov.hmrc.http.{ HeaderCarrier, HttpResponse }
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.http.logging.SessionId
 
 class SubscribeServiceSpec extends PlaySpec with OneServerPerSuite with MockitoSugar with BeforeAndAfterEach {
 
   val mockEtmpConnector = mock[ETMPConnector]
   val mockggAdminConnector = mock[GovernmentGatewayAdminConnector]
+  val mockTaxEnrolementConnector = mock[TaxEnrolmentsConnector]
 
   object TestSubscribeServiceSpec extends SubscribeService {
     override val ggAdminConnector = mockggAdminConnector
     override val etmpConnector = mockEtmpConnector
+    override val taxEnrolmentsConnector: TaxEnrolmentsConnector = mockTaxEnrolementConnector
+    override val isEmacFeatureToggle: Boolean = false
   }
 
 
@@ -243,74 +247,6 @@ class SubscribeServiceSpec extends PlaySpec with OneServerPerSuite with MockitoS
       """.stripMargin
     )
 
-
-    "return the normal json if we don't have a utr" in {
-
-      val utr = (strippedJson \ "utr").asOpt[String]
-      utr.isDefined must be(false)
-
-      TestSubscribeServiceSpec.stripJsonForEtmp(strippedJson) must be (strippedJson)
-    }
-
-    "strip the utr if we have one" in {
-      val utr = (inputJson \ "utr").asOpt[String]
-      utr.isDefined must be(true)
-
-      TestSubscribeServiceSpec.stripJsonForEtmp(inputJson) must be (strippedJson)
-    }
-
   }
 
-  "getPostCode" must {
-    "return None if we have no Post Code" in {
-      val postCodeJson = Json.parse(
-        """
-          |{
-          |"address":[
-          | {
-          |    "addressDetails": {
-          |    }
-          | }]
-          | }
-          |
-        """.stripMargin
-      )
-      TestSubscribeServiceSpec.getPostcode(postCodeJson).isDefined must be (false)
-    }
-
-    "return None if we have an empty  Post Code" in {
-      val postCodeJson = Json.parse(
-        """
-          |{
-          |"address":[
-          | {
-          |    "addressDetails": {
-          |      "postalCode": ""
-          |    }
-          | }]
-          | }
-          |
-        """.stripMargin
-      )
-      TestSubscribeServiceSpec.getPostcode(postCodeJson).isDefined must be (false)
-    }
-
-    "return the post code if we have one" in {
-      val postCodeJson = Json.parse(
-        """
-          |{
-          |"address":[
-          | {
-          |    "addressDetails": {
-          |      "postalCode": "AB12CD"
-          |    }
-          | }],
-          | "knownFactPostcode":"NE1 1EN"
-          | }
-          |
-        """.stripMargin
-      )
-      TestSubscribeServiceSpec.getPostcode(postCodeJson) must be (Some("NE1 1EN"))
-    }
-  }
 }
