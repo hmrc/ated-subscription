@@ -51,7 +51,7 @@ trait TaxEnrolmentsConnector extends ServicesConfig with RawResponseReads with A
     val timerContext = metrics.startTimer(MetricsEnum.EmacAddKnownFacts)
     http.PUT[JsValue, HttpResponse](putUrl, Json.toJson(verifiers)) map { response =>
       timerContext.stop()
-      auditAddKnownFacts(GovernmentGatewayConstants.AtedServiceName, verifiers, response)
+      auditAddKnownFacts(putUrl, verifiers, response)
       response.status match {
         case NO_CONTENT =>
           metrics.incrementSuccessCounter(MetricsEnum.EmacAddKnownFacts)
@@ -65,15 +65,16 @@ trait TaxEnrolmentsConnector extends ServicesConfig with RawResponseReads with A
     }
   }
 
-  private def auditAddKnownFacts(serviceName: String, verifiers: Verifiers, response: HttpResponse)(implicit hc: HeaderCarrier) = {
+  private def auditAddKnownFacts(putUrl: String, verifiers: Verifiers, response: HttpResponse)(implicit hc: HeaderCarrier) = {
     val status = response.status match {
       case NO_CONTENT => EventTypes.Succeeded
       case _ => EventTypes.Failed
     }
     sendDataEvent(transactionName = "emacAddKnownFacts",
       detail = Map("txName" -> "emacAddKnownFacts",
-        "serviceName" -> s"$serviceName",
-        "verifiers" -> s"$verifiers",
+        "serviceName" -> s"${GovernmentGatewayConstants.AtedServiceName}",
+        "putUrl" -> s"$putUrl",
+        "requestBody" -> s"${Json.prettyPrint(Json.toJson(verifiers))}",
         "responseStatus" -> s"${response.status}",
         "responseBody" -> s"${response.body}",
         "status" -> s"$status"))
