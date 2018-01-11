@@ -95,7 +95,6 @@ trait SubscribeService extends RunMode {
     Verifiers(List(Verifier(GovernmentGatewayConstants.AtedReferenceNoType, getAtedReference(response)),
       Verifier(GovernmentGatewayConstants.PostalCode, getPostcode(data)),
       Verifier(GovernmentGatewayConstants.CTUTR, getUtr(data))))
-
   }
 
   private def getAtedReference(response: HttpResponse): String = {
