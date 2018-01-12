@@ -222,20 +222,12 @@ class SubscribeServiceSpec extends PlaySpec with OneServerPerSuite with MockitoS
     }
 
 
-    "throw exception when we are passed valid json with no postal code " in {
-
-      when(mockEtmpConnector.subscribeAted(Matchers.any())(Matchers.any())).thenReturn(Future.successful(HttpResponse(OK, Some(successResponse))))
-      val result = TestSubscribeServiceSpecGG.subscribe(inputJsonNoPostalCodeOrUtr)
-      val thrown = the[RuntimeException] thrownBy await(result)
-      thrown.getMessage must include("utr must be supplied " )
-    }
-
     "throw exception when we are passed valid json with no utr" in {
 
       when(mockEtmpConnector.subscribeAted(Matchers.any())(Matchers.any())).thenReturn(Future.successful(HttpResponse(OK, Some(successResponse))))
       val result = TestSubscribeServiceSpecGG.subscribe(inputJsonNoUtr)
       val thrown = the[RuntimeException] thrownBy await(result)
-      thrown.getMessage must include("postcode must be supplied" )
+      thrown.getMessage must include("postalCode or utr must be supplied")
     }
 
     "throw exception when we are passed valid json with no ated ref" in {
