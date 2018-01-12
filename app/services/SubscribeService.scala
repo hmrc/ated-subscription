@@ -71,7 +71,7 @@ trait SubscribeService extends RunMode {
     data.as[JsObject] - "utr" - "isNonUKClientRegisteredByAgent" - "knownFactPostcode"
   }
 
-  private def getUtrAndPostCode(data: JsValue): (String, String) = {
+  private def getUtrAndPostCode(data: JsValue): (Option[String], Option[String]) = {
      def getUtr: Option[String] = {
       (data \ "utr").asOpt[String] match {
         case Some(x) if !x.trim().isEmpty => Some(x)
@@ -86,23 +86,30 @@ trait SubscribeService extends RunMode {
       }
     }
 
-    (getUtr, getPostcode) match {
-      case (Some(utr), Some(postCode)) => (utr, postCode)
-      case (None, None) => throw new RuntimeException(s"[SubscribeService][createKnownFacts] - postalCode or utr must be supplied:: $data)")
-    }
+    if(getUtr.isEmpty && getPostcode.isEmpty)
+      throw new RuntimeException(s"[SubscribeService][createKnownFacts] - postalCode or utr must be supplied:: $data)")
+    else
+      (getUtr, getPostcode)
   }
 
   private def createKnownFacts(response: HttpResponse, data: JsValue) = {
     val (utr, postCode) = getUtrAndPostCode(data)
-    KnownFactsForService(List(KnownFact(GovernmentGatewayConstants.AtedReferenceNoType, getAtedReference(response)),
-      KnownFact(GovernmentGatewayConstants.PostalCode, postCode),
-      KnownFact(GovernmentGatewayConstants.CTUTR, utr)))
+
+    val postCodeKnownFact = postCode.map(KnownFact(GovernmentGatewayConstants.PostalCode, _))
+    val utrKnownFact = utr.map(KnownFact(GovernmentGatewayConstants.CTUTR, _))
+
+    val utrAndPostcodeList = List(postCodeKnownFact, utrKnownFact).flatten
+
+    KnownFactsForService(List(KnownFact(GovernmentGatewayConstants.AtedReferenceNoType, getAtedReference(response))) ++ utrAndPostcodeList)
   }
 
   private def createEnrolmentVerifiers(response: HttpResponse, data: JsValue): Verifiers = {
     val (utr, postCode) = getUtrAndPostCode(data)
-    Verifiers(List(Verifier(GovernmentGatewayConstants.PostalCode, postCode),
-      Verifier(GovernmentGatewayConstants.CTUTR, utr)))
+
+    val postCodeKnownFact = postCode.map(Verifier(GovernmentGatewayConstants.PostalCode, _))
+    val utrKnownFact = utr.map(Verifier(GovernmentGatewayConstants.CTUTR, _))
+
+    Verifiers(List(postCodeKnownFact,utrKnownFact).flatten)
   }
 
   private def getAtedReference(response: HttpResponse): String = {
