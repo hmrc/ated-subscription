@@ -71,30 +71,38 @@ trait SubscribeService extends RunMode {
     data.as[JsObject] - "utr" - "isNonUKClientRegisteredByAgent" - "knownFactPostcode"
   }
 
-  private def getUtr(data: JsValue): String = {
-    (data \ "utr").asOpt[String] match {
-      case Some(x) if !x.trim().isEmpty => x
-      case _ => throw new RuntimeException("[SubscribeService][getUtr] - utr must be supplied " + data)
+  private def getUtrAndPostCode(data: JsValue): (String, String) = {
+     def getUtr: Option[String] = {
+      (data \ "utr").asOpt[String] match {
+        case Some(x) if !x.trim().isEmpty => Some(x)
+        case _ => None
+      }
     }
-  }
 
-  private def getPostcode(data: JsValue): String = {
-    (data \ "knownFactPostcode").asOpt[String] match {
-      case Some(x) if !x.trim().isEmpty => x
-      case _ => throw new RuntimeException("[SubscribeService][getPostcode] - postcode must be supplied " + data)
+     def getPostcode: Option[String] = {
+      (data \ "knownFactPostcode").asOpt[String] match {
+        case Some(x) if !x.trim().isEmpty => Some(x)
+        case _ => None
+      }
+    }
+
+    (getUtr, getPostcode) match {
+      case (Some(utr), Some(postCode)) => (utr, postCode)
+      case (None, None) => throw new RuntimeException(s"[SubscribeService][createKnownFacts] - postalCode or utr must be supplied:: $data)")
     }
   }
 
   private def createKnownFacts(response: HttpResponse, data: JsValue) = {
+    val (utr, postCode) = getUtrAndPostCode(data)
     KnownFactsForService(List(KnownFact(GovernmentGatewayConstants.AtedReferenceNoType, getAtedReference(response)),
-      KnownFact(GovernmentGatewayConstants.PostalCode, getPostcode(data)),
-      KnownFact(GovernmentGatewayConstants.CTUTR, getUtr(data))))
+      KnownFact(GovernmentGatewayConstants.PostalCode, postCode),
+      KnownFact(GovernmentGatewayConstants.CTUTR, utr)))
   }
 
   private def createEnrolmentVerifiers(response: HttpResponse, data: JsValue): Verifiers = {
-    Verifiers(List(Verifier(GovernmentGatewayConstants.AtedReferenceNoType, getAtedReference(response)),
-      Verifier(GovernmentGatewayConstants.PostalCode, getPostcode(data)),
-      Verifier(GovernmentGatewayConstants.CTUTR, getUtr(data))))
+    val (utr, postCode) = getUtrAndPostCode(data)
+    Verifiers(List(Verifier(GovernmentGatewayConstants.PostalCode, postCode),
+      Verifier(GovernmentGatewayConstants.CTUTR, utr)))
   }
 
   private def getAtedReference(response: HttpResponse): String = {
