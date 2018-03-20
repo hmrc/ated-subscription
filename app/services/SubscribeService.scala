@@ -95,8 +95,8 @@ trait SubscribeService extends RunMode {
   private def createKnownFacts(response: HttpResponse, data: JsValue) = {
     val (utr, postCode) = getUtrAndPostCode(data)
 
-    val postCodeKnownFact = postCode.map(KnownFact(GovernmentGatewayConstants.PostalCode, _))
-    val utrKnownFact = utr.map(KnownFact(GovernmentGatewayConstants.CTUTR, _))
+    val postCodeKnownFact = postCode.map(KnownFact(GovernmentGatewayConstants.VerifierPostalCode, _))
+    val utrKnownFact = utr.map(KnownFact(GovernmentGatewayConstants.VerifierCtUtr, _))
 
     val utrAndPostcodeList = List(postCodeKnownFact, utrKnownFact).flatten
 
@@ -104,12 +104,14 @@ trait SubscribeService extends RunMode {
   }
 
   private def createEnrolmentVerifiers(response: HttpResponse, data: JsValue): Verifiers = {
-    val (utr, postCode) = getUtrAndPostCode(data)
-
-    val postCodeKnownFact = postCode.map(Verifier(GovernmentGatewayConstants.PostalCode, _))
-    val utrKnownFact = utr.map(Verifier(GovernmentGatewayConstants.CTUTR, _))
-
-    Verifiers(List(postCodeKnownFact,utrKnownFact).flatten)
+    getUtrAndPostCode(data) match {
+      case (Some(uniqueTaxRef), Some(ukClientPostCode)) =>
+        Verifiers(List(Verifier(GovernmentGatewayConstants.VerifierPostalCode, ukClientPostCode), Verifier(GovernmentGatewayConstants.VerifierCtUtr, uniqueTaxRef)))
+      case (None, Some(nonUkClientPostCode)) =>
+        Verifiers(List(Verifier(GovernmentGatewayConstants.VerifierNonUKPostalCode, nonUkClientPostCode))) //N.B. Non-UK Clients might use the property UK Postcode or their own Non-UK Postal Code
+      case (None, None) =>
+        throw new RuntimeException(s"[NewRegisterUserService][subscribeAted][createEMACEnrolRequest] - postalCode or utr must be supplied")
+    }
   }
 
   private def getAtedReference(response: HttpResponse): String = {
