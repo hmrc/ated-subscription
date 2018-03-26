@@ -48,6 +48,8 @@ trait TaxEnrolmentsConnector extends ServicesConfig with RawResponseReads with A
     val enrolmentKey = s"${GovernmentGatewayConstants.AtedServiceName}~$atedRefIdentifier~$atedRefNo"
     val putUrl = s"$emacBaseUrl/$enrolmentKey"
 
+    println(s"-----TaxEnrolmentsConnector---addKnownFacts---${Json.prettyPrint(Json.toJson(verifiers))}")
+
     val timerContext = metrics.startTimer(MetricsEnum.EmacAddKnownFacts)
     http.PUT[JsValue, HttpResponse](putUrl, Json.toJson(verifiers)) map { response =>
       timerContext.stop()
