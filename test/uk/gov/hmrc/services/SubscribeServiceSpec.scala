@@ -88,7 +88,7 @@ class SubscribeServiceSpec extends PlaySpec with OneServerPerSuite with MockitoS
 
   "SubscribeService" must {
 
-    val inputJsonNoPostalCodeOrUtr = Json.parse(
+    val inputJsonNoUtrNoUKPostcode = Json.parse(
       """
         |{"acknowledgementReference":"Tp0x8ql6GldqGyGh6u36149378018603",
         |"safeId":"XE0001234567890",
@@ -109,14 +109,13 @@ class SubscribeServiceSpec extends PlaySpec with OneServerPerSuite with MockitoS
         |      "email": "aa@aa.com"
         |    }
         | }],
-        | "utr":"",
         |  "isNonUKClientRegisteredByAgent": false,
-        | "knownFactPostcode": "NE1 1EN"}
+        |  "knownFactPostcode": "12345678"}
         |
       """.stripMargin
     )
 
-    val inputJsonNoUtr = Json.parse(
+    val inputJsonNoUtrNoPostCode = Json.parse(
       """
         |{"acknowledgementReference":"Tp0x8ql6GldqGyGh6u36149378018603",
         |"safeId":"XE0001234567890",
@@ -137,7 +136,7 @@ class SubscribeServiceSpec extends PlaySpec with OneServerPerSuite with MockitoS
         |      "email": "aa@aa.com"
         |    }
         | }],
-        | "utr":""}
+        |  "isNonUKClientRegisteredByAgent": false}
         |
       """.stripMargin
     )
@@ -187,6 +186,25 @@ class SubscribeServiceSpec extends PlaySpec with OneServerPerSuite with MockitoS
       response.json must be(successResponse)
     }
 
+    "subscribe when we are passed valid json doing upsert enrolment in EMAC with NO UTR and Non-UK Postcode" in {
+
+      when(mockEtmpConnector.subscribeAted(Matchers.any())(Matchers.any())).thenReturn(Future.successful(HttpResponse(OK, Some(successResponse))))
+      when(mockTaxEnrolementConnector.addKnownFacts(Matchers.any(), Matchers.any())(Matchers.any())).thenReturn(Future.successful(HttpResponse(OK)))
+      val result = TestSubscribeServiceSpecEMAC.subscribe(inputJsonNoUtrNoUKPostcode)
+      val response = await(result)
+      response.status must be(OK)
+      response.json must be(successResponse)
+    }
+
+    "throw exception when valid json with no utr and postcode is passeed for enrolment in EMAC" in {
+
+      when(mockEtmpConnector.subscribeAted(Matchers.any())(Matchers.any())).thenReturn(Future.successful(HttpResponse(OK, Some(successResponse))))
+      val result = TestSubscribeServiceSpecEMAC.subscribe(inputJsonNoUtrNoPostCode)
+      val thrown = the[RuntimeException] thrownBy await(result)
+      thrown.getMessage must include("postalCode or utr must be supplied")
+    }
+
+
     "subscribe without adding known facts if this is isNonUKClientRegisteredByAgent" in {
       val inputJsonNoKnownFacts = Json.parse(
         """
@@ -221,11 +239,10 @@ class SubscribeServiceSpec extends PlaySpec with OneServerPerSuite with MockitoS
       response.json must be(successResponse)
     }
 
-
-    "throw exception when we are passed valid json with no utr" in {
+    "throw exception when we are passed valid json with no utr and postcode" in {
 
       when(mockEtmpConnector.subscribeAted(Matchers.any())(Matchers.any())).thenReturn(Future.successful(HttpResponse(OK, Some(successResponse))))
-      val result = TestSubscribeServiceSpecGG.subscribe(inputJsonNoUtr)
+      val result = TestSubscribeServiceSpecGG.subscribe(inputJsonNoUtrNoPostCode)
       val thrown = the[RuntimeException] thrownBy await(result)
       thrown.getMessage must include("postalCode or utr must be supplied")
     }

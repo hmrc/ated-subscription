@@ -72,28 +72,28 @@ trait SubscribeService extends RunMode {
   }
 
   private def getUtrAndPostCode(data: JsValue): (Option[String], Option[String]) = {
-     def getUtr: Option[String] = {
+    def getUtr: Option[String] = {
       (data \ "utr").asOpt[String] match {
         case Some(x) if !x.trim().isEmpty => Some(x)
         case _ => None
       }
     }
 
-     def getPostcode: Option[String] = {
+    def getPostcode: Option[String] = {
       (data \ "knownFactPostcode").asOpt[String] match {
         case Some(x) if !x.trim().isEmpty => Some(x)
         case _ => None
       }
     }
 
-    if(getUtr.isEmpty && getPostcode.isEmpty)
-      throw new RuntimeException(s"[SubscribeService][createKnownFacts] - postalCode or utr must be supplied:: $data)")
-    else
-      (getUtr, getPostcode)
+    (getUtr, getPostcode)
   }
 
   private def createKnownFacts(response: HttpResponse, data: JsValue) = {
     val (utr, postCode) = getUtrAndPostCode(data)
+
+    if (utr.isEmpty && postCode.isEmpty)
+      throw new RuntimeException(s"[SubscribeService][createKnownFacts] - postalCode or utr must be supplied:: $data)")
 
     val postCodeKnownFact = postCode.map(KnownFact(GovernmentGatewayConstants.VerifierPostalCode, _))
     val utrKnownFact = utr.map(KnownFact(GovernmentGatewayConstants.VerifierCtUtr, _))
