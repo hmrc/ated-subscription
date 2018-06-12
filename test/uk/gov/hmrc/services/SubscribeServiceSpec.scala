@@ -231,12 +231,12 @@ class SubscribeServiceSpec extends PlaySpec with OneServerPerSuite with MockitoS
       thrown.getMessage must include("postalCode or utr must be supplied")
     }
 
-    "throw exception when valid json with no postcode is passeed for enrolment in EMAC" in {
-
+    "respond with OK when only ctutr when valid json with no postcode is passed for enrolment in EMAC" in {
       when(mockEtmpConnector.subscribeAted(Matchers.any())(Matchers.any())).thenReturn(Future.successful(HttpResponse(OK, Some(successResponse))))
       val result = TestSubscribeServiceSpecEMAC.subscribe(inputJsonNoPostcode)
-      val thrown = the[RuntimeException] thrownBy await(result)
-      thrown.getMessage must include("postalCode must be supplied")
+      val response = await(result)
+      response.status must be(OK)
+      response.json must be(successResponse)
     }
 
 

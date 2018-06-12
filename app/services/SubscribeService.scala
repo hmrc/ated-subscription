@@ -19,6 +19,7 @@ package services
 import connectors.connectors.TaxEnrolmentsConnector
 import connectors.{ETMPConnector, GovernmentGatewayAdminConnector}
 import models.{KnownFact, KnownFactsForService, Verifier, Verifiers}
+import play.api.Logger
 import play.api.http.Status._
 import play.api.libs.json.{JsObject, JsValue}
 import utils.GovernmentGatewayConstants
@@ -110,8 +111,8 @@ trait SubscribeService extends RunMode {
       case (None, Some(nonUkClientPostCode)) =>
         Verifiers(List(Verifier(GovernmentGatewayConstants.VerifierNonUKPostalCode, nonUkClientPostCode))) //N.B. Non-UK Clients might use the property UK Postcode or their own Non-UK Postal Code
       case (Some(uniqueTaxRef), None) =>
-        throw new RuntimeException(s"[NewRegisterUserService][subscribeAted][createEMACEnrolRequest] - postalCode must be supplied")
-      case (None, None) =>
+        Verifiers(List(Verifier(GovernmentGatewayConstants.VerifierCtUtr, uniqueTaxRef)))
+      case (_, _) =>
         throw new RuntimeException(s"[NewRegisterUserService][subscribeAted][createEMACEnrolRequest] - postalCode or utr must be supplied")
     }
   }
