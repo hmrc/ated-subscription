@@ -115,6 +115,33 @@ class SubscribeServiceSpec extends PlaySpec with OneServerPerSuite with MockitoS
       """.stripMargin
     )
 
+    val inputJsonNoPostcode = Json.parse(
+      """
+        |{"acknowledgementReference":"Tp0x8ql6GldqGyGh6u36149378018603",
+        |"safeId":"XE0001234567890",
+        |"emailConsent":false,
+        |"address":[
+        | {
+        |   "name1":"Paul",
+        |    "name2":"Carrielies",
+        |    "addressDetails": {
+        |      "addressLine1": "100 SuttonStreet",
+        |      "addressLine2": "Wokingham",
+        |      "countryCode": "GB"
+        |    },
+        |    "contactDetails": {
+        |      "telephone": "01332752856",
+        |      "mobile": "07782565326",
+        |      "fax": "01332754256",
+        |      "email": "aa@aa.com"
+        |    }
+        | }],
+        |  "utr":"12345",
+        |  "isNonUKClientRegisteredByAgent": false}
+        |
+      """.stripMargin
+    )
+
     val inputJsonNoUtrNoPostCode = Json.parse(
       """
         |{"acknowledgementReference":"Tp0x8ql6GldqGyGh6u36149378018603",
@@ -202,6 +229,14 @@ class SubscribeServiceSpec extends PlaySpec with OneServerPerSuite with MockitoS
       val result = TestSubscribeServiceSpecEMAC.subscribe(inputJsonNoUtrNoPostCode)
       val thrown = the[RuntimeException] thrownBy await(result)
       thrown.getMessage must include("postalCode or utr must be supplied")
+    }
+
+    "respond with OK when only ctutr when valid json with no postcode is passed for enrolment in EMAC" in {
+      when(mockEtmpConnector.subscribeAted(Matchers.any())(Matchers.any())).thenReturn(Future.successful(HttpResponse(OK, Some(successResponse))))
+      val result = TestSubscribeServiceSpecEMAC.subscribe(inputJsonNoPostcode)
+      val response = await(result)
+      response.status must be(OK)
+      response.json must be(successResponse)
     }
 
 
