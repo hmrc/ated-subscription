@@ -12,8 +12,8 @@ private object AppDependencies {
   import play.sbt.PlayImport._
   import play.core.PlayVersion
 
-  private val microserviceBootstrapVersion = "6.18.0"
-  private val domainVersion = "4.1.0"
+  private val microserviceBootstrapVersion = "8.3.0"
+  private val domainVersion = "5.2.0"
 
   val compile = Seq(
 
@@ -32,10 +32,10 @@ private object AppDependencies {
   object Test {
     def apply() = new TestDependencies {
       override lazy val test = Seq(
-        "org.scalatest" %% "scalatest" % "2.2.6" % scope,
+        "org.scalatest" %% "scalatest" % "3.0.5" % scope,
         "org.pegdown" % "pegdown" % "1.4.2" % scope,
         "com.typesafe.play" %% "play-test" % PlayVersion.current % scope,
-        "org.scalatestplus.play" %% "scalatestplus-play" % "1.5.1" % scope,
+        "org.scalatestplus.play" %% "scalatestplus-play" % "2.0.1" % scope,
         "org.mockito" % "mockito-all" % "1.10.19" % scope
       )
     }.test

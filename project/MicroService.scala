@@ -3,12 +3,13 @@ import sbt.Keys._
 import sbt.Tests.{Group, SubProcess}
 import sbt._
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
+import uk.gov.hmrc.versioning.SbtGitVersioning.autoImport.majorVersion
+import uk.gov.hmrc.SbtArtifactory
 
 trait MicroService {
 
   import uk.gov.hmrc._
   import DefaultBuildSettings._
-  import TestPhases._
   import uk.gov.hmrc.SbtAutoBuildPlugin
   import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
   import uk.gov.hmrc.versioning.SbtGitVersioning
@@ -17,7 +18,7 @@ trait MicroService {
   val appName: String
 
   val appDependencies: Seq[ModuleID]
-  lazy val plugins: Seq[Plugins] = Seq(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin)
+  lazy val plugins: Seq[Plugins] = Seq(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin, SbtArtifactory)
   lazy val playSettings: Seq[Setting[_]] = Seq.empty
 
   lazy val scoverageSettings = {
@@ -33,6 +34,7 @@ trait MicroService {
   lazy val microservice = Project(appName, file("."))
     .enablePlugins(plugins: _*)
     .settings(playSettings ++ scoverageSettings: _*)
+    .settings( majorVersion := 2 )
     .settings(scalaSettings: _*)
     .settings(publishingSettings: _*)
     .settings(defaultSettings(): _*)
@@ -45,7 +47,6 @@ trait MicroService {
       retrieveManaged := true,
       routesGenerator := StaticRoutesGenerator
     )
-    .settings(inConfig(TemplateTest)(Defaults.testSettings): _*)
     .settings(
       resolvers := Seq(
         Resolver.bintrayRepo("hmrc", "releases"),
@@ -54,16 +55,4 @@ trait MicroService {
       )
     )
     .enablePlugins(SbtDistributablesPlugin, SbtAutoBuildPlugin, SbtGitVersioning)
-}
-
-private object TestPhases {
-
-  val allPhases = "tt->test;test->test;test->compile;compile->compile"
-
-  lazy val TemplateTest = config("tt") extend Test
-
-  def oneForkedJvmPerTest(tests: Seq[TestDefinition]) =
-    tests map {
-      test => new Group(test.name, Seq(test), SubProcess(ForkOptions(runJVMOptions = Seq("-Dtest.name=" + test.name))))
-    }
 }
