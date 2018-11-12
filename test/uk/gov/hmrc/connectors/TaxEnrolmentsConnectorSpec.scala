@@ -49,8 +49,8 @@ class TaxEnrolmentsConnectorSpec extends PlaySpec with OneServerPerSuite with Mo
   val mockWSHttp: CorePut = mock[MockedVerbs]
 
   object TestTaxEnrolmentsConnector extends TaxEnrolmentsConnector {
-    val serviceUrl = baseUrl("enrolment-store-proxy")
-    val emacBaseUrl = s"$serviceUrl/enrolment-store-proxy/enrolment-store/enrolments"
+    val serviceUrl = baseUrl("tax-enrolments")
+    val emacBaseUrl = s"$serviceUrl/tax-enrolments"
     override val audit: Audit = new TestAudit
     override val appName: String = "Test"
     override def metrics = Metrics
