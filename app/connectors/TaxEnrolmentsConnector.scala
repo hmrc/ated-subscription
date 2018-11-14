@@ -83,7 +83,7 @@ trait TaxEnrolmentsConnector extends ServicesConfig with RawResponseReads with A
 
 object TaxEnrolmentsConnector extends TaxEnrolmentsConnector {
   val serviceUrl = baseUrl("tax-enrolments")
-  val emacBaseUrl = s"$serviceUrl/tax-enrolments"
+  val emacBaseUrl = s"$serviceUrl/tax-enrolments/enrolments"
   val metrics = Metrics
   val http = WSHttp
   val audit: Audit = new Audit(AppName.appName, MicroserviceAuditConnector)
