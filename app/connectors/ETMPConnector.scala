@@ -19,7 +19,8 @@ package connectors
 import audit.Auditable
 import config.{MicroserviceAuditConnector, WSHttp}
 import metrics.{Metrics, MetricsEnum}
-import play.api.Logger
+import play.api.Mode.Mode
+import play.api.{Configuration, Logger, Play}
 import play.api.http.Status._
 import play.api.libs.json.JsValue
 import uk.gov.hmrc.http._
@@ -110,13 +111,17 @@ trait ETMPConnector extends ServicesConfig with RawResponseReads with Auditable 
 }
 
 object ETMPConnector extends ETMPConnector {
+  val appName: String = AppName(Play.current.configuration).appName
   val serviceURL = baseUrl("etmp-hod")
   val baseURI = "annual-tax-enveloped-dwellings"
   val subscribeUri = "subscribe"
   val urlHeaderEnvironment: String = config("etmp-hod").getString("environment").getOrElse("")
   val urlHeaderAuthorization: String = s"Bearer ${config("etmp-hod").getString("authorization-token").getOrElse("")}"
-  val audit: Audit = new Audit(AppName.appName, MicroserviceAuditConnector)
+  val audit: Audit = new Audit(appName, MicroserviceAuditConnector)
   val http = WSHttp
-  val appName: String = AppName.appName
   val metrics = Metrics
+
+  override protected def mode: Mode = Play.current.mode
+
+  override protected def runModeConfiguration: Configuration = Play.current.configuration
 }

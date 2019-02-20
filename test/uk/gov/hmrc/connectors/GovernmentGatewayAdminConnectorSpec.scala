@@ -24,8 +24,10 @@ import metrics.Metrics
 import org.mockito.Matchers
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.{OneServerPerSuite, PlaySpec}
+import play.api.Mode.Mode
+import play.api.{Configuration, Play}
 import play.api.libs.json.{JsValue, Json}
 import play.api.test.Helpers._
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
@@ -40,8 +42,10 @@ import uk.gov.hmrc.play.microservice.config.LoadAuditingConfig
 
 class GovernmentGatewayAdminConnectorSpec extends PlaySpec with OneServerPerSuite with MockitoSugar with BeforeAndAfterEach {
 
-  object TestAuditConnector extends AuditConnector with AppName with RunMode {
-    override lazy val auditingConfig = LoadAuditingConfig(s"$env.auditing")
+  object TestAuditConnector extends AuditConnector with AppName {
+    override lazy val auditingConfig = LoadAuditingConfig("auditing")
+
+    override protected def appNameConfiguration: Configuration = Play.current.configuration
   }
 
   trait MockedVerbs extends CoreGet with CorePost
@@ -55,6 +59,10 @@ class GovernmentGatewayAdminConnectorSpec extends PlaySpec with OneServerPerSuit
     override val appName: String = "Test"
 
     override def metrics = Metrics
+
+    override protected def mode: Mode = Play.current.mode
+
+    override protected def runModeConfiguration: Configuration = Play.current.configuration
   }
 
   override def beforeEach = {

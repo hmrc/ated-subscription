@@ -19,7 +19,7 @@ package services
 import connectors.connectors.TaxEnrolmentsConnector
 import connectors.{ETMPConnector, GovernmentGatewayAdminConnector}
 import models.{KnownFact, KnownFactsForService, Verifier, Verifiers}
-import play.api.Logger
+import play.api.{Logger, Play}
 import play.api.http.Status._
 import play.api.libs.json.{JsObject, JsValue}
 import utils.GovernmentGatewayConstants
@@ -33,10 +33,10 @@ object SubscribeService extends SubscribeService {
   val etmpConnector: ETMPConnector = ETMPConnector
   val ggAdminConnector: GovernmentGatewayAdminConnector = GovernmentGatewayAdminConnector
   val taxEnrolmentsConnector: TaxEnrolmentsConnector = TaxEnrolmentsConnector
-  val isEmacFeatureToggle: Boolean = runModeConfiguration.getBoolean("emacsFeatureToggle").getOrElse(true)
+  val isEmacFeatureToggle: Boolean = Play.current.configuration.getBoolean("emacsFeatureToggle").getOrElse(true)
 }
 
-trait SubscribeService extends RunMode {
+trait SubscribeService {
 
   def etmpConnector: ETMPConnector
 

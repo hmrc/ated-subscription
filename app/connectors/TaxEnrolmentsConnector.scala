@@ -22,7 +22,8 @@ import audit.Auditable
 import config.{MicroserviceAuditConnector, WSHttp}
 import metrics.{Metrics, MetricsEnum}
 import models._
-import play.api.Logger
+import play.api.Mode.Mode
+import play.api.{Configuration, Logger, Play}
 import play.api.http.Status._
 import play.api.libs.json.{JsValue, Json}
 import uk.gov.hmrc.http._
@@ -82,10 +83,14 @@ trait TaxEnrolmentsConnector extends ServicesConfig with RawResponseReads with A
 }
 
 object TaxEnrolmentsConnector extends TaxEnrolmentsConnector {
+  val appName: String = AppName(Play.current.configuration).appName
   val serviceUrl = baseUrl("tax-enrolments")
   val emacBaseUrl = s"$serviceUrl/tax-enrolments/enrolments"
   val metrics = Metrics
   val http = WSHttp
-  val audit: Audit = new Audit(AppName.appName, MicroserviceAuditConnector)
-  val appName: String = AppName.appName
+  val audit: Audit = new Audit(appName, MicroserviceAuditConnector)
+
+  override protected def mode: Mode = Play.current.mode
+
+  override protected def runModeConfiguration: Configuration = Play.current.configuration
 }
