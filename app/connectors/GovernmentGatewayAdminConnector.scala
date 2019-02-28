@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 HM Revenue & Customs
+ * Copyright 2019 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,8 @@ import audit.Auditable
 import config.{MicroserviceAuditConnector, WSHttp}
 import metrics.{Metrics, MetricsEnum}
 import models._
-import play.api.Logger
+import play.api.Mode.Mode
+import play.api.{Configuration, Logger, Play}
 import play.api.http.Status._
 import play.api.libs.json.{JsValue, Json}
 import uk.gov.hmrc.http._
@@ -78,10 +79,14 @@ trait GovernmentGatewayAdminConnector extends ServicesConfig with RawResponseRea
 }
 
 object GovernmentGatewayAdminConnector extends GovernmentGatewayAdminConnector {
+  val appName: String = AppName(Play.current.configuration).appName
   val serviceURL = baseUrl("government-gateway-admin")
   val addKnownFactsURI = "known-facts"
-  val audit: Audit = new Audit(AppName.appName, MicroserviceAuditConnector)
-  val appName: String = AppName.appName
+  val audit: Audit = new Audit(appName, MicroserviceAuditConnector)
   val metrics = Metrics
   val http = WSHttp
+
+  override protected def mode: Mode = Play.current.mode
+
+  override protected def runModeConfiguration: Configuration = Play.current.configuration
 }
