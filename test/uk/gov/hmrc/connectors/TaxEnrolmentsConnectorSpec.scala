@@ -18,81 +18,68 @@ package uk.gov.hmrc.connectors
 
 import java.util.UUID
 
-import builders.{GGBuilder, TestAudit}
-import connectors.GovernmentGatewayAdminConnector
-import connectors.connectors.TaxEnrolmentsConnector
-import metrics.Metrics
+import builders.TestAudit
+import connectors.TaxEnrolmentsConnector
+import metrics.ServiceMetrics
 import models.{Verifier, Verifiers}
 import org.mockito.Matchers
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.{OneServerPerSuite, PlaySpec}
-import play.api.Mode.Mode
-import play.api.{Configuration, Play}
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.JsValue
 import play.api.test.Helpers._
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.logging.SessionId
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.Audit
-import uk.gov.hmrc.play.config.{AppName, RunMode}
-import uk.gov.hmrc.play.microservice.config.LoadAuditingConfig
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.Future
 
 class TaxEnrolmentsConnectorSpec extends PlaySpec with OneServerPerSuite with MockitoSugar with BeforeAndAfterEach {
 
-  object TestAuditConnector extends AuditConnector with AppName {
-    override lazy val auditingConfig = LoadAuditingConfig("auditing")
+  val mockWSHttp: HttpClient = mock[HttpClient]
+  val mockServiceMetrics: ServiceMetrics = app.injector.instanceOf[ServiceMetrics]
 
-    override protected def appNameConfiguration: Configuration = Play.current.configuration
+  val mockServiceUrl = "tax-enrolments"
+
+  trait Setup {
+    class TestTaxEnrolmentsConnector extends TaxEnrolmentsConnector {
+      val serviceUrl: String = mockServiceUrl
+      val emacBaseUrl = s"$serviceUrl/tax-enrolments"
+      override val audit: Audit = new TestAudit(app.injector.instanceOf[AuditConnector])
+      override def metrics: ServiceMetrics = mockServiceMetrics
+      override val http: HttpClient = mockWSHttp
+    }
+
+    val connector = new TestTaxEnrolmentsConnector()
   }
 
-  trait MockedVerbs extends CorePut
-  val mockWSHttp: CorePut = mock[MockedVerbs]
-
-  object TestTaxEnrolmentsConnector extends TaxEnrolmentsConnector {
-    val serviceUrl = baseUrl("tax-enrolments")
-    val emacBaseUrl = s"$serviceUrl/tax-enrolments"
-    override val audit: Audit = new TestAudit
-    override val appName: String = "Test"
-    override def metrics = Metrics
-    override val http: CorePut = mockWSHttp
-
-    override protected def mode: Mode = Play.current.mode
-
-    override protected def runModeConfiguration: Configuration = Play.current.configuration
-  }
-
-  override def beforeEach = {
+  override def beforeEach: Unit = {
     reset(mockWSHttp)
   }
- val createVerifiers = Verifiers(List(Verifier("AtedReferenceNoType", "AtedReferenceNoType"),
-         Verifier("PostalCode", "PostalCode"),
-         Verifier("CTUTR", "CTUTR")))
+
+  val createVerifiers = Verifiers(List(Verifier("AtedReferenceNoType", "AtedReferenceNoType"),
+    Verifier("PostalCode", "PostalCode"),
+    Verifier("CTUTR", "CTUTR")))
 
   "TaxEnrolmentConnector" must {
 
-
-    "use correct metrics" in {
-      TaxEnrolmentsConnector.metrics must be(Metrics)
-    }
-
-    "for successful set of known facts, return success" in {
-      implicit val hc = new HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
+    "for successful set of known facts, return success" in new Setup {
+      implicit val hc = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
       when(mockWSHttp.PUT[JsValue, HttpResponse](Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any())).
         thenReturn(Future.successful(HttpResponse(NO_CONTENT)))
 
-      val result = TestTaxEnrolmentsConnector.addKnownFacts(createVerifiers, "ATED-123")
+      val result: Future[HttpResponse] = connector.addKnownFacts(createVerifiers, "ATED-123")
       await(result).status must be(NO_CONTENT)
     }
 
-    "for unsuccessful set of known facts, return subscription response" in {
-      implicit val hc = new HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
+    "for unsuccessful set of known facts, return subscription response" in new Setup {
+      implicit val hc = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
       when(mockWSHttp.PUT[JsValue, HttpResponse](Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any())).
         thenReturn(Future.successful(HttpResponse(BAD_REQUEST)))
-      val result = TestTaxEnrolmentsConnector.addKnownFacts(createVerifiers, "ATED-123")
+      val result: Future[HttpResponse] = connector.addKnownFacts(createVerifiers, "ATED-123")
       await(result).status must be(BAD_REQUEST)
     }
 

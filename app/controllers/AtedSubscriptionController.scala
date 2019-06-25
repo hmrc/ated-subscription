@@ -16,36 +16,34 @@
 
 package controllers
 
-import play.api.Logger
-import play.api.mvc.Action
+import javax.inject.{Inject, Singleton}
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import services.SubscribeService
-import uk.gov.hmrc.play.microservice.controller.BaseController
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-trait AtedSubscriptionController extends BaseController {
+@Singleton
+class DefaultAtedSubscriptionController @Inject()(val subscribeService: SubscribeService,
+                                                  val cc: ControllerComponents) extends BackendController(cc) with AtedSubscriptionController
 
+@Singleton
+class AgentAtedSubscriptionController @Inject()(val subscribeService: SubscribeService,
+                                                val cc: ControllerComponents) extends BackendController(cc) with AtedSubscriptionController
+
+trait AtedSubscriptionController extends BackendController {
   def subscribeService: SubscribeService
 
-  def subscribe(orgId: String) = Action.async { implicit request =>
+  def subscribe(orgId: String): Action[AnyContent] = Action.async { implicit request =>
     val jsonData = request.body.asJson.get
     subscribeService.subscribe(jsonData) map { returnedResponse =>
       returnedResponse.status match {
-        case OK => Ok(returnedResponse.body)
-        case BAD_REQUEST => BadRequest(returnedResponse.body)
-        case NOT_FOUND => NotFound(returnedResponse.body)
-        case SERVICE_UNAVAILABLE => ServiceUnavailable(returnedResponse.body)
-        case _ => InternalServerError(returnedResponse.body)
+        case OK                   => Ok(returnedResponse.body)
+        case BAD_REQUEST          => BadRequest(returnedResponse.body)
+        case NOT_FOUND            => NotFound(returnedResponse.body)
+        case SERVICE_UNAVAILABLE  => ServiceUnavailable(returnedResponse.body)
+        case _                    => InternalServerError(returnedResponse.body)
       }
     }
   }
-
-}
-
-object AtedSubscriptionController extends AtedSubscriptionController {
-  val subscribeService: SubscribeService = SubscribeService
-}
-
-object AgentAtedSubscriptionController extends AtedSubscriptionController {
-  val subscribeService: SubscribeService = SubscribeService
 }

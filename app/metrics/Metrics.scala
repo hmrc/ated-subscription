@@ -16,22 +16,16 @@
 
 package metrics
 
-import com.codahale.metrics.Timer
+import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.Timer.Context
+import com.kenshoo.play.metrics.Metrics
+import javax.inject.Inject
 import metrics.MetricsEnum.MetricsEnum
-import uk.gov.hmrc.play.graphite.MicroserviceMetrics
 
-trait Metrics {
-
-  def startTimer(api: MetricsEnum): Timer.Context
-  def incrementSuccessCounter(api: MetricsEnum): Unit
-  def incrementFailedCounter(api: MetricsEnum): Unit
-
-}
-
-object Metrics extends Metrics with MicroserviceMetrics {
-
-  val registry = metrics.defaultRegistry
+class DefaultServiceMetrics @Inject()(val metrics: Metrics) extends ServiceMetrics
+trait ServiceMetrics {
+  val metrics: Metrics
+  val registry: MetricRegistry = metrics.defaultRegistry
 
   val timers = Map(
     MetricsEnum.GgAdminAddKnownFacts -> registry.timer("gga-add-known-facts-client-response-timer"),
@@ -53,10 +47,7 @@ object Metrics extends Metrics with MicroserviceMetrics {
     MetricsEnum.EmacAddKnownFacts -> registry.counter("emac-upsert-an-enrolment-failed-counter")
   )
 
-  override def startTimer(api: MetricsEnum): Context = timers(api).time()
-
-  override def incrementSuccessCounter(api: MetricsEnum): Unit = successCounters(api).inc()
-
-  override def incrementFailedCounter(api: MetricsEnum): Unit = failedCounters(api).inc()
-
+  def startTimer(api: MetricsEnum): Context = timers(api).time()
+  def incrementSuccessCounter(api: MetricsEnum): Unit = successCounters(api).inc()
+  def incrementFailedCounter(api: MetricsEnum): Unit = failedCounters(api).inc()
 }

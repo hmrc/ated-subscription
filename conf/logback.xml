@@ -47,6 +47,10 @@
     <logger name="org.asynchttpclient.netty.channel.DefaultChannelPool" level="WARN"/>
     <logger name="org.asynchttpclient.netty" level="WARN"/>
 
+    <logger name="org.apache.http.wire" level="INFO"/>
+    <logger name="org.apache.http.headers" level="INFO"/>
+    <logger name="org.eclipse.jetty" level="INFO"/>
+
     <logger name="uk.gov" level="INFO"/>
 
     <logger name="application" level="DEBUG"/>

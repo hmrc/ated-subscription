@@ -20,51 +20,43 @@ import java.util.UUID
 
 import builders.TestAudit
 import connectors.ETMPConnector
-import metrics.Metrics
+import metrics.ServiceMetrics
 import org.mockito.Matchers
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.{OneServerPerSuite, PlaySpec}
-import play.api.Mode.Mode
-import play.api.{Configuration, Play}
 import play.api.libs.json.{JsValue, Json}
 import play.api.test.Helpers._
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.logging.SessionId
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.Audit
-import uk.gov.hmrc.play.config.{AppName, RunMode}
-import uk.gov.hmrc.play.microservice.config.LoadAuditingConfig
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.Future
 
 class ETMPConnectorSpec extends PlaySpec with OneServerPerSuite with MockitoSugar with BeforeAndAfterEach {
 
-  object TestAuditConnector extends AuditConnector with AppName {
-    override lazy val auditingConfig = LoadAuditingConfig("auditing")
+  val mockWSHttp: HttpClient = mock[HttpClient]
+  val mockServiceMetrics: ServiceMetrics = app.injector.instanceOf[ServiceMetrics]
 
-    override protected def appNameConfiguration: Configuration = Play.current.configuration
-  }
+  val mockServiceUrl = "etmp-hod"
 
-  trait MockedVerbs extends CoreGet with CorePost
-  val mockWSHttp: CoreGet with CorePost = mock[MockedVerbs]
+  trait Setup {
+    class TestETMPConnector extends ETMPConnector {
+      override val serviceURL: String = mockServiceUrl
+      override val baseURI = "annual-tax-enveloped-dwellings"
+      override val subscribeUri = "subscribe"
+      override val http: HttpClient = mockWSHttp
+      override val urlHeaderEnvironment: String = ""
+      override val urlHeaderAuthorization: String = ""
+      override val audit: Audit = new TestAudit(app.injector.instanceOf[AuditConnector])
 
-  object TestETMPConnector extends ETMPConnector {
-    override val serviceURL = baseUrl("etmp-hod")
-    override val baseURI = "annual-tax-enveloped-dwellings"
-    override val subscribeUri = "subscribe"
-    override val http: CoreGet with CorePost = mockWSHttp
-    override val urlHeaderEnvironment: String = config("etmp-hod").getString("environment").getOrElse("")
-    override val urlHeaderAuthorization: String = s"Bearer ${config("etmp-hod").getString("authorization-token").getOrElse("")}"
-    override val audit: Audit = new TestAudit
-    override val appName: String = "Test"
+      override def metrics: ServiceMetrics = mockServiceMetrics
+    }
 
-    override def metrics = Metrics
-
-    override protected def mode: Mode = Play.current.mode
-
-    override protected def runModeConfiguration: Configuration = Play.current.configuration
+    val connector: TestETMPConnector = new TestETMPConnector
   }
 
   override def beforeEach = {
@@ -130,28 +122,30 @@ class ETMPConnectorSpec extends PlaySpec with OneServerPerSuite with MockitoSuga
       """.stripMargin
     )
 
-    "use correct metrics" in {
-      ETMPConnector.metrics must be(Metrics)
-    }
-
-    "for successful subscription, return subscription response" in {
-      implicit val hc = new HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
-      when(mockWSHttp.POST[JsValue, HttpResponse](Matchers.any(), Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any())).thenReturn(Future.successful(HttpResponse(OK, responseJson = Some(succesfulSubscribeJson))))
-      val result = TestETMPConnector.subscribeAted(inputJson)
+    "for successful subscription, return subscription response" in new Setup {
+      implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
+      when(mockWSHttp.POST[JsValue, HttpResponse]
+        (Matchers.any(), Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any()))
+        .thenReturn(Future.successful(HttpResponse(OK, responseJson = Some(succesfulSubscribeJson))))
+      val result: Future[HttpResponse] = connector.subscribeAted(inputJson)
       await(result).json must be(succesfulSubscribeJson)
     }
 
-    "for successful subscription, return subscription response and uadit internation address" in {
-      implicit val hc = new HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
-      when(mockWSHttp.POST[JsValue, HttpResponse](Matchers.any(), Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any())).thenReturn(Future.successful(HttpResponse(OK, responseJson = Some(succesfulSubscribeJson))))
-      val result = TestETMPConnector.subscribeAted(inputJsonNoPostcode)
+    "for successful subscription, return subscription response and uadit internation address" in new Setup {
+      implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
+      when(mockWSHttp.POST[JsValue, HttpResponse]
+        (Matchers.any(), Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any()))
+        .thenReturn(Future.successful(HttpResponse(OK, responseJson = Some(succesfulSubscribeJson))))
+      val result: Future[HttpResponse] = connector.subscribeAted(inputJsonNoPostcode)
       await(result).json must be(succesfulSubscribeJson)
     }
 
-    "for unsuccessful subscription, return subscription response" in {
-      implicit val hc = new HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
-      when(mockWSHttp.POST[JsValue, HttpResponse](Matchers.any(), Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any())).thenReturn(Future.successful(HttpResponse(BAD_REQUEST, responseJson = Some(unsuccesfulSubscribeJson))))
-      val result = TestETMPConnector.subscribeAted(inputJson)
+    "for unsuccessful subscription, return subscription response" in new Setup {
+      implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
+      when(mockWSHttp.POST[JsValue, HttpResponse]
+        (Matchers.any(), Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any()))
+        .thenReturn(Future.successful(HttpResponse(BAD_REQUEST, responseJson = Some(unsuccesfulSubscribeJson))))
+      val result: Future[HttpResponse] = connector.subscribeAted(inputJson)
       await(result).json must be(unsuccesfulSubscribeJson)
     }
 

@@ -16,37 +16,34 @@
 
 package services
 
-import connectors.connectors.TaxEnrolmentsConnector
-import connectors.{ETMPConnector, GovernmentGatewayAdminConnector}
+import connectors.{ETMPConnector, GovernmentGatewayAdminConnector, TaxEnrolmentsConnector}
+import javax.inject.Inject
 import models.{KnownFact, KnownFactsForService, Verifier, Verifiers}
-import play.api.{Logger, Play}
 import play.api.http.Status._
 import play.api.libs.json.{JsObject, JsValue}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import utils.GovernmentGatewayConstants
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import uk.gov.hmrc.play.config.RunMode
 
-object SubscribeService extends SubscribeService {
-  val etmpConnector: ETMPConnector = ETMPConnector
-  val ggAdminConnector: GovernmentGatewayAdminConnector = GovernmentGatewayAdminConnector
-  val taxEnrolmentsConnector: TaxEnrolmentsConnector = TaxEnrolmentsConnector
-  val isEmacFeatureToggle: Boolean = Play.current.configuration.getBoolean("emacsFeatureToggle").getOrElse(true)
+class DefaultSubscribeService @Inject()(val etmpConnector: ETMPConnector,
+                                        val ggAdminConnector: GovernmentGatewayAdminConnector,
+                                        val taxEnrolmentsConnector: TaxEnrolmentsConnector,
+                                        val servicesConfig: ServicesConfig) extends SubscribeService {
+  val isEmacFeatureToggle: Boolean = servicesConfig.getBoolean("emacsFeatureToggle")
 }
 
 trait SubscribeService {
 
   def etmpConnector: ETMPConnector
-
   def ggAdminConnector: GovernmentGatewayAdminConnector
-
   def taxEnrolmentsConnector: TaxEnrolmentsConnector
 
   val isEmacFeatureToggle: Boolean
 
-  def subscribe(data: JsValue)(implicit hc: HeaderCarrier) = {
+  def subscribe(data: JsValue)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
     for {
       submitResponse <- etmpConnector.subscribeAted(stripJsonForEtmp(data))
       _ <- addKnownFacts(submitResponse, data)
@@ -61,8 +58,9 @@ trait SubscribeService {
       case (false, OK) =>
         if (isEmacFeatureToggle) {
           taxEnrolmentsConnector.addKnownFacts(createEnrolmentVerifiers(response, data), getAtedReference(response))
-        } else
+        } else {
           ggAdminConnector.addKnownFacts(createKnownFacts(response, data))
+        }
       case _ =>
         Future.successful(response)
     }
@@ -93,8 +91,9 @@ trait SubscribeService {
   private def createKnownFacts(response: HttpResponse, data: JsValue) = {
     val (utr, postCode) = getUtrAndPostCode(data)
 
-    if (utr.isEmpty && postCode.isEmpty)
+    if (utr.isEmpty && postCode.isEmpty) {
       throw new RuntimeException(s"[SubscribeService][createKnownFacts] - postalCode or utr must be supplied:: $data)")
+    }
 
     val postCodeKnownFact = postCode.map(KnownFact(GovernmentGatewayConstants.VerifierPostalCode, _))
     val utrKnownFact = utr.map(KnownFact(GovernmentGatewayConstants.VerifierCtUtr, _))
@@ -107,9 +106,14 @@ trait SubscribeService {
   private def createEnrolmentVerifiers(response: HttpResponse, data: JsValue): Verifiers = {
     getUtrAndPostCode(data) match {
       case (Some(uniqueTaxRef), Some(ukClientPostCode)) =>
-        Verifiers(List(Verifier(GovernmentGatewayConstants.VerifierPostalCode, ukClientPostCode), Verifier(GovernmentGatewayConstants.VerifierCtUtr, uniqueTaxRef)))
+        Verifiers(List(
+          Verifier(GovernmentGatewayConstants.VerifierPostalCode, ukClientPostCode),
+          Verifier(GovernmentGatewayConstants.VerifierCtUtr, uniqueTaxRef))
+        )
       case (None, Some(nonUkClientPostCode)) =>
-        Verifiers(List(Verifier(GovernmentGatewayConstants.VerifierNonUKPostalCode, nonUkClientPostCode))) //N.B. Non-UK Clients might use the property UK Postcode or their own Non-UK Postal Code
+        Verifiers(List(
+          Verifier(GovernmentGatewayConstants.VerifierNonUKPostalCode, nonUkClientPostCode))
+        ) //N.B. Non-UK Clients might use the property UK Postcode or their own Non-UK Postal Code
       case (Some(uniqueTaxRef), None) =>
         Verifiers(List(Verifier(GovernmentGatewayConstants.VerifierCtUtr, uniqueTaxRef)))
       case (_, _) =>
