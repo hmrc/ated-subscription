@@ -17,38 +17,45 @@
 package connectors
 
 import audit.Auditable
-import config.{MicroserviceAuditConnector, WSHttp}
-import metrics.{Metrics, MetricsEnum}
-import play.api.Mode.Mode
-import play.api.{Configuration, Logger, Play}
+import javax.inject.Inject
+import metrics.{MetricsEnum, ServiceMetrics}
+import play.api.Logger
 import play.api.http.Status._
 import play.api.libs.json.JsValue
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.logging.Authorization
+import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.{Audit, EventTypes}
-import uk.gov.hmrc.play.config.{AppName, ServicesConfig}
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-trait ETMPConnector extends ServicesConfig with RawResponseReads with Auditable {
+class DefaultETMPConnector @Inject()(val servicesConfig: ServicesConfig,
+                                     val auditConnector: AuditConnector,
+                                     val metrics: ServiceMetrics,
+                                     val http: HttpClient) extends ETMPConnector {
+  val serviceURL = servicesConfig.baseUrl("etmp-hod")
+  val baseURI = "annual-tax-enveloped-dwellings"
+  val subscribeUri = "subscribe"
+  val urlHeaderEnvironment: String = servicesConfig.getConfString("etmp-hod.environment", "")
+  val urlHeaderAuthorization: String = s"Bearer ${servicesConfig.getConfString("etmp-hod.authorization-token", "")}"
+  val audit: Audit = new Audit("ated-subscription", auditConnector)
+}
+
+trait ETMPConnector extends RawResponseReads with Auditable {
 
   def serviceURL: String
-
   def baseURI: String
-
   def subscribeUri: String
-
   def urlHeaderEnvironment: String
-
   def urlHeaderAuthorization: String
-
-  def metrics: Metrics
-
-  def http: CoreGet with CorePost
+  def metrics: ServiceMetrics
+  def http: HttpClient
 
   def subscribeAted(data: JsValue)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
-    implicit val hc = createHeaderCarrier
+    implicit val hc = createHeaderCarrier()
     val timerContext = metrics.startTimer(MetricsEnum.EtmpSubscribeAted)
     http.POST[JsValue, HttpResponse](s"$serviceURL/$baseURI/$subscribeUri", data) map {
       response =>
@@ -67,7 +74,7 @@ trait ETMPConnector extends ServicesConfig with RawResponseReads with Auditable 
     }
   }
 
-  private def auditSubscribe(data: JsValue, response: HttpResponse)(implicit hc: HeaderCarrier) = {
+  private def auditSubscribe(data: JsValue, response: HttpResponse)(implicit hc: HeaderCarrier): Unit = {
     val eventType = response.status match {
       case OK => EventTypes.Succeeded
       case _ => EventTypes.Failed
@@ -84,11 +91,11 @@ trait ETMPConnector extends ServicesConfig with RawResponseReads with Auditable 
         "responseBody" -> s"${response.body}",
         "status" -> s"$eventType"))
 
-    def getAddressPiece(piece: Option[JsValue]):String = {
-      if (piece.isDefined)
-        piece.get.toString()
-      else
-        ""
+    def getAddressPiece(piece: Option[JsValue]): String = {
+      piece match {
+        case Some(x) => x.toString()
+        case _       => ""
+      }
     }
 
     val postcodeOption = (data \\ "postalCode").headOption
@@ -108,20 +115,4 @@ trait ETMPConnector extends ServicesConfig with RawResponseReads with Auditable 
       authorization = Some(Authorization(urlHeaderAuthorization)))
   }
 
-}
-
-object ETMPConnector extends ETMPConnector {
-  val appName: String = AppName(Play.current.configuration).appName
-  val serviceURL = baseUrl("etmp-hod")
-  val baseURI = "annual-tax-enveloped-dwellings"
-  val subscribeUri = "subscribe"
-  val urlHeaderEnvironment: String = config("etmp-hod").getString("environment").getOrElse("")
-  val urlHeaderAuthorization: String = s"Bearer ${config("etmp-hod").getString("authorization-token").getOrElse("")}"
-  val audit: Audit = new Audit(appName, MicroserviceAuditConnector)
-  val http = WSHttp
-  val metrics = Metrics
-
-  override protected def mode: Mode = Play.current.mode
-
-  override protected def runModeConfiguration: Configuration = Play.current.configuration
 }

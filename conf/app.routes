@@ -1,4 +1,4 @@
 # microservice specific routes
 
-POST                    /org/:org/subscribe                  controllers.AtedSubscriptionController.subscribe(org: String)
+POST                    /org/:org/subscribe                  controllers.DefaultAtedSubscriptionController.subscribe(org: String)
 POST                    /agent/:ac/subscribe                 controllers.AgentAtedSubscriptionController.subscribe(ac: String)

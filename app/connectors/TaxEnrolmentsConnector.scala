@@ -16,34 +16,41 @@
 
 package connectors
 
-package connectors
-
 import audit.Auditable
-import config.{MicroserviceAuditConnector, WSHttp}
-import metrics.{Metrics, MetricsEnum}
+import javax.inject.Inject
+import metrics.{MetricsEnum, ServiceMetrics}
 import models._
-import play.api.Mode.Mode
-import play.api.{Configuration, Logger, Play}
+import play.api.Logger
 import play.api.http.Status._
 import play.api.libs.json.{JsValue, Json}
 import uk.gov.hmrc.http._
+import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.{Audit, EventTypes}
-import uk.gov.hmrc.play.config.{AppName, ServicesConfig}
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.GovernmentGatewayConstants
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
-trait TaxEnrolmentsConnector extends ServicesConfig with RawResponseReads with Auditable {
+class DefaultTaxEnrolmentsConnector @Inject()(val servicesConfig: ServicesConfig,
+                                              val auditConnector: AuditConnector,
+                                              val metrics: ServiceMetrics,
+                                              val http: HttpClient) extends TaxEnrolmentsConnector {
+  val serviceUrl: String = servicesConfig.baseUrl("tax-enrolments")
+  val emacBaseUrl = s"$serviceUrl/tax-enrolments/enrolments"
+  val audit: Audit = new Audit("ated-subscription", auditConnector)
+}
+
+
+trait TaxEnrolmentsConnector extends RawResponseReads with Auditable {
 
   def serviceUrl: String
-
   def emacBaseUrl: String
+  def metrics: ServiceMetrics
+  def http: HttpClient
 
-  def metrics: Metrics
-
-  def http: CorePut
-
-  def addKnownFacts(verifiers: Verifiers, atedRefNo: String)(implicit headerCarrier: HeaderCarrier) = {
+  def addKnownFacts(verifiers: Verifiers, atedRefNo: String)(implicit headerCarrier: HeaderCarrier): Future[HttpResponse] = {
 
     val atedRefIdentifier = "ATEDRefNumber"
     val enrolmentKey = s"${GovernmentGatewayConstants.AtedServiceName}~$atedRefIdentifier~$atedRefNo"
@@ -66,7 +73,7 @@ trait TaxEnrolmentsConnector extends ServicesConfig with RawResponseReads with A
     }
   }
 
-  private def auditAddKnownFacts(putUrl: String, verifiers: Verifiers, response: HttpResponse)(implicit hc: HeaderCarrier) = {
+  private def auditAddKnownFacts(putUrl: String, verifiers: Verifiers, response: HttpResponse)(implicit hc: HeaderCarrier): Unit = {
     val status = response.status match {
       case NO_CONTENT => EventTypes.Succeeded
       case _ => EventTypes.Failed
@@ -82,15 +89,3 @@ trait TaxEnrolmentsConnector extends ServicesConfig with RawResponseReads with A
   }
 }
 
-object TaxEnrolmentsConnector extends TaxEnrolmentsConnector {
-  val appName: String = AppName(Play.current.configuration).appName
-  val serviceUrl = baseUrl("tax-enrolments")
-  val emacBaseUrl = s"$serviceUrl/tax-enrolments/enrolments"
-  val metrics = Metrics
-  val http = WSHttp
-  val audit: Audit = new Audit(appName, MicroserviceAuditConnector)
-
-  override protected def mode: Mode = Play.current.mode
-
-  override protected def runModeConfiguration: Configuration = Play.current.configuration
-}

@@ -17,34 +17,41 @@
 package uk.gov.hmrc.controllers
 
 import controllers.AtedSubscriptionController
-import controllers.AgentAtedSubscriptionController
 import org.mockito.Matchers
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.{OneServerPerSuite, PlaySpec}
-import play.api.libs.json.Json
+import play.api.libs.json.{JsValue, Json}
+import play.api.mvc.{ControllerComponents, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import services.SubscribeService
+import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
 import scala.concurrent.Future
-import uk.gov.hmrc.http.HttpResponse
 
 class AtedSubscriptionControllerSpec extends PlaySpec with OneServerPerSuite with MockitoSugar with BeforeAndAfterEach {
 
   val mockSubscribeService: SubscribeService = mock[SubscribeService]
   val orgId = "bwtiFLqlNp0baWPAavb7Jy-Klyg"
 
-  object TestAtedSubscriptionController extends AtedSubscriptionController {
-    override val subscribeService: SubscribeService = mockSubscribeService
+  trait Setup {
+    val cc: ControllerComponents = app.injector.instanceOf[ControllerComponents]
+
+    class TestAtedSubscriptionController extends BackendController(cc) with AtedSubscriptionController {
+      override val subscribeService: SubscribeService = mockSubscribeService
+    }
+
+    val controller = new TestAtedSubscriptionController()
   }
 
-  override def beforeEach = {
+  override def beforeEach: Unit = {
     reset(mockSubscribeService)
   }
 
-  val inputJson = Json.parse(
+  val inputJson: JsValue = Json.parse(
     """
       |{
       |  "safeId": "XE0001234567890",
@@ -64,7 +71,7 @@ class AtedSubscriptionControllerSpec extends PlaySpec with OneServerPerSuite wit
     """.stripMargin
   )
 
-  val successResponse = Json.parse(
+  val successResponse: JsValue = Json.parse(
     """
       |{
       |  "processingDate": "2001-12-17T09:30:47Z",
@@ -74,7 +81,7 @@ class AtedSubscriptionControllerSpec extends PlaySpec with OneServerPerSuite wit
     """.stripMargin
   )
 
-  val failureResponse = Json.parse(
+  val failureResponse: JsValue = Json.parse(
     """
       |{
       |  "Reason": "Your submission contains one or more errors."
@@ -83,40 +90,35 @@ class AtedSubscriptionControllerSpec extends PlaySpec with OneServerPerSuite wit
   )
 
   "AtedSubscriptionController" must {
-    "use correct SubscribeService" in {
-      AtedSubscriptionController.subscribeService must be(SubscribeService)
-      AgentAtedSubscriptionController.subscribeService must be(SubscribeService)
-    }
-
     "subscribe" must {
-      "response with OK, when subscription request was successful" in {
+      "response with OK, when subscription request was successful" in new Setup {
         when(mockSubscribeService.subscribe(Matchers.any())(Matchers.any()))
           .thenReturn(Future.successful(HttpResponse(OK, Some(successResponse))))
-        val result = TestAtedSubscriptionController.subscribe(orgId).apply(FakeRequest().withJsonBody(inputJson))
+        val result: Future[Result] = controller.subscribe(orgId).apply(FakeRequest().withJsonBody(inputJson))
         status(result) must be(OK)
       }
-      "response with BadRequest, when subscription request was containing bad data" in {
+      "response with BadRequest, when subscription request was containing bad data" in new Setup {
         when(mockSubscribeService.subscribe(Matchers.any())(Matchers.any()))
           .thenReturn(Future.successful(HttpResponse(BAD_REQUEST, Some(failureResponse))))
-        val result = TestAtedSubscriptionController.subscribe(orgId).apply(FakeRequest().withJsonBody(inputJson))
+        val result: Future[Result] = controller.subscribe(orgId).apply(FakeRequest().withJsonBody(inputJson))
         status(result) must be(BAD_REQUEST)
       }
-      "response with NotFound, when The remote endpoint has indicated that no data can be found" in {
+      "response with NotFound, when The remote endpoint has indicated that no data can be found" in new Setup {
         when(mockSubscribeService.subscribe(Matchers.any())(Matchers.any()))
           .thenReturn(Future.successful(HttpResponse(NOT_FOUND, Some(failureResponse))))
-        val result = TestAtedSubscriptionController.subscribe(orgId).apply(FakeRequest().withJsonBody(inputJson))
+        val result: Future[Result] = controller.subscribe(orgId).apply(FakeRequest().withJsonBody(inputJson))
         status(result) must be(NOT_FOUND)
       }
-      "response with ServiceUnavailable, when ETMP is not responding or has returned a HTTP 500" in {
+      "response with ServiceUnavailable, when ETMP is not responding or has returned a HTTP 500" in new Setup {
         when(mockSubscribeService.subscribe(Matchers.any())(Matchers.any()))
           .thenReturn(Future.successful(HttpResponse(SERVICE_UNAVAILABLE, Some(failureResponse))))
-        val result = TestAtedSubscriptionController.subscribe(orgId).apply(FakeRequest().withJsonBody(inputJson))
+        val result: Future[Result] = controller.subscribe(orgId).apply(FakeRequest().withJsonBody(inputJson))
         status(result) must be(SERVICE_UNAVAILABLE)
       }
-      "response with Internal Server error, when any other status is returned" in {
+      "response with Internal Server error, when any other status is returned" in new Setup {
         when(mockSubscribeService.subscribe(Matchers.any())(Matchers.any()))
           .thenReturn(Future.successful(HttpResponse(GATEWAY_TIMEOUT, Some(failureResponse))))
-        val result = TestAtedSubscriptionController.subscribe(orgId).apply(FakeRequest().withJsonBody(inputJson))
+        val result: Future[Result] = controller.subscribe(orgId).apply(FakeRequest().withJsonBody(inputJson))
         status(result) must be(INTERNAL_SERVER_ERROR)
       }
     }
