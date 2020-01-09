@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 HM Revenue & Customs
+ * Copyright 2020 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import java.util.UUID
 import builders.{GGBuilder, TestAudit}
 import connectors.GovernmentGatewayAdminConnector
 import metrics.ServiceMetrics
-import org.mockito.Matchers
+import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.mockito.MockitoSugar
@@ -75,7 +75,7 @@ class GovernmentGatewayAdminConnectorSpec extends PlaySpec with OneServerPerSuit
 
     "for successful set of known facts, return success" in new Setup {
       implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
-      when(mockWSHttp.POST[JsValue, HttpResponse](Matchers.any(), Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any())).
+      when(mockWSHttp.POST[JsValue, HttpResponse](ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())).
         thenReturn(Future.successful(HttpResponse(OK, responseJson = Some(succesfulSubscribeJson))))
 
       val result = connector.addKnownFacts(GGBuilder.createKnownFacts("ATED", "ATED-123"))
@@ -84,7 +84,7 @@ class GovernmentGatewayAdminConnectorSpec extends PlaySpec with OneServerPerSuit
 
     "for unsuccessful set of known facts, return subscription response" in new Setup {
       implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
-      when(mockWSHttp.POST[JsValue, HttpResponse](Matchers.any(), Matchers.any(), Matchers.any())(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any())).
+      when(mockWSHttp.POST[JsValue, HttpResponse](ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())).
         thenReturn(Future.successful(HttpResponse(BAD_REQUEST, responseJson = Some(unsuccessfulSubscribeJson))))
       val result = connector.addKnownFacts(GGBuilder.createKnownFacts("ATED", "ATED-123"))
       await(result).json must be(unsuccessfulSubscribeJson)

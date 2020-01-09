@@ -13,7 +13,7 @@ private object AppDependencies {
 
   val compile: Seq[ModuleID] = Seq(
     ws,
-    "uk.gov.hmrc" %% "bootstrap-play-26" % "0.39.0",
+    "uk.gov.hmrc" %% "bootstrap-play-26" % "1.3.0",
     "uk.gov.hmrc" %% "domain"            % "5.6.0-play-26"
   )
 
@@ -29,7 +29,7 @@ private object AppDependencies {
         "org.scalatestplus.play"  %% "scalatestplus-play" % "3.1.2"             % scope,
         "org.pegdown"              % "pegdown"            % "1.6.0"             % scope,
         "com.typesafe.play"       %% "play-test"          % PlayVersion.current % scope,
-        "org.mockito"              % "mockito-all"        % "1.10.19"           % scope,
+        "org.mockito"              % "mockito-core"       % "3.2.4"           % scope,
         "com.github.tomakehurst"   % "wiremock-jre8"      % "2.23.2"            % IntegrationTest withSources()
       )
     }.test
