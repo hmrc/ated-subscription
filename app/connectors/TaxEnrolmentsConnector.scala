@@ -17,6 +17,7 @@
 package connectors
 
 import audit.Auditable
+import com.codahale.metrics.Timer
 import javax.inject.Inject
 import metrics.{MetricsEnum, ServiceMetrics}
 import models._
@@ -56,7 +57,7 @@ trait TaxEnrolmentsConnector extends RawResponseReads with Auditable {
     val enrolmentKey = s"${GovernmentGatewayConstants.AtedServiceName}~$atedRefIdentifier~$atedRefNo"
     val putUrl = s"$emacBaseUrl/$enrolmentKey"
 
-    val timerContext = metrics.startTimer(MetricsEnum.EmacAddKnownFacts)
+    val timerContext: Timer.Context = metrics.startTimer(MetricsEnum.EmacAddKnownFacts)
     http.PUT[JsValue, HttpResponse](putUrl, Json.toJson(verifiers)) map { response =>
       timerContext.stop()
       auditAddKnownFacts(putUrl, verifiers, response)
