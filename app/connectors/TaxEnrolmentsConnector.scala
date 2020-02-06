@@ -40,9 +40,8 @@ class DefaultTaxEnrolmentsConnector @Inject()(val servicesConfig: ServicesConfig
                                               val http: HttpClient) extends TaxEnrolmentsConnector {
   val serviceUrl: String = servicesConfig.baseUrl("tax-enrolments")
   val emacBaseUrl = s"$serviceUrl/tax-enrolments/enrolments"
-  val audit: Audit = new Audit("ated-subscription", auditConnector)
+  override val audit: Audit = new Audit("ated-subscription", auditConnector)
 }
-
 
 trait TaxEnrolmentsConnector extends RawResponseReads with Auditable {
 

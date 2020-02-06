@@ -19,10 +19,15 @@ package audit
 import uk.gov.hmrc.play.audit.AuditExtensions
 import uk.gov.hmrc.play.audit.model.{Audit, DataEvent}
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 
 trait Auditable {
 
-  def audit: Audit
+  val auditConnector: AuditConnector
+
+  def appName: String = "ated-subscription"
+
+  def audit: Audit = new Audit(appName, auditConnector)
 
   def sendDataEvent(transactionName: String,
                     path: String = "N/A",
@@ -31,7 +36,7 @@ trait Auditable {
                    )(implicit hc: HeaderCarrier): Unit =
     audit.sendDataEvent(
       DataEvent(
-        "ated-subscription",
+        appName,
         auditType = transactionName,
         tags = AuditExtensions.auditHeaderCarrier(hc).toAuditTags(transactionName, path) ++ tags,
         detail = AuditExtensions.auditHeaderCarrier(hc).toAuditDetails(detail.toSeq: _*)

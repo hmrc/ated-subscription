@@ -48,7 +48,8 @@ class GovernmentGatewayAdminConnectorSpec extends PlaySpec with OneServerPerSuit
       override val serviceURL: String = mockServiceUrl
       override val addKnownFactsURI = "known-facts"
       override val http: HttpClient = mockWSHttp
-      override val audit: Audit = new TestAudit(app.injector.instanceOf[AuditConnector])
+      override val auditConnector: AuditConnector = app.injector.instanceOf[AuditConnector]
+      override val audit: Audit = new TestAudit(auditConnector)
       override def metrics: ServiceMetrics = mockServiceMetrics
     }
 

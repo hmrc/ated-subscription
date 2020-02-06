@@ -21,7 +21,8 @@ import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.mockito.MockitoSugar
-import org.scalatestplus.play.{OneServerPerSuite, PlaySpec}
+import org.scalatestplus.play.PlaySpec
+import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{ControllerComponents, Result}
 import play.api.test.FakeRequest
@@ -32,7 +33,7 @@ import uk.gov.hmrc.play.bootstrap.controller.BackendController
 
 import scala.concurrent.Future
 
-class AtedSubscriptionControllerSpec extends PlaySpec with OneServerPerSuite with MockitoSugar with BeforeAndAfterEach {
+class AtedSubscriptionControllerSpec extends PlaySpec with GuiceOneServerPerSuite with MockitoSugar with BeforeAndAfterEach {
 
   val mockSubscribeService: SubscribeService = mock[SubscribeService]
   val orgId = "bwtiFLqlNp0baWPAavb7Jy-Klyg"

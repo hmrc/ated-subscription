@@ -17,6 +17,10 @@ trait IntegrationApplication extends GuiceOneServerPerSuite with WireMockConfig 
   lazy val ws: WSClient = app.injector.instanceOf[WSClient]
 
   val appConfig: Map[String, Any] = Map(
+    "microservice.services.auth.host"                     -> wireMockHost,
+    "microservice.services.auth.port"                     -> wireMockPort,
+    "microservice.services.enrolment-store-proxy.host"    -> wireMockHost,
+    "microservice.services.enrolment-store-proxy.port"    -> wireMockPort,
     "application.router"                                  -> "testOnlyDoNotUseInAppConf.Routes",
     "microservice.metrics.graphite.host"                  -> "localhost",
     "microservice.metrics.graphite.port"                  -> 2003,
