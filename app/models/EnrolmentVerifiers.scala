@@ -14,15 +14,23 @@
  * limitations under the License.
  */
 
-package utils
+package models
 
-object GovernmentGatewayConstants {
+import play.api.libs.json.{JsValue, Json, Writes}
 
-  val AtedServiceName = "HMRC-ATED-ORG"
-  val AtedReferenceNoType = "ATEDRefNumber"
+case class EnrolmentVerifiers(verifiers: (String, String)*)
 
-  val VerifierPostalCode = "Postcode"
-  val VerifierNonUKPostalCode = "NonUKPostalCode"
-  val VerifierCtUtr= "CTUTR"
-
+object EnrolmentVerifiers {
+  implicit val writer: Writes[EnrolmentVerifiers] = new Writes[EnrolmentVerifiers] {
+    override def writes(verifiers: EnrolmentVerifiers): JsValue =
+      Json.obj("verifiers" ->
+        (verifiers.verifiers map {
+          case (key, value) =>
+            Json.obj(
+              "key" -> key,
+              "value" -> value
+            )
+        })
+      )
+  }
 }

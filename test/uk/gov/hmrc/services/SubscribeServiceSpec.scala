@@ -18,7 +18,7 @@ package uk.gov.hmrc.services
 
 import java.util.UUID
 
-import connectors.{ETMPConnector, GovernmentGatewayAdminConnector, TaxEnrolmentsConnector}
+import connectors.{EtmpConnector, GovernmentGatewayAdminConnector, TaxEnrolmentsConnector}
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
@@ -34,7 +34,7 @@ import scala.concurrent.Future
 
 class SubscribeServiceSpec extends PlaySpec with OneServerPerSuite with MockitoSugar with BeforeAndAfterEach {
 
-  val mockEtmpConnector: ETMPConnector = mock[ETMPConnector]
+  val mockEtmpConnector: EtmpConnector = mock[EtmpConnector]
   val mockggAdminConnector: GovernmentGatewayAdminConnector = mock[GovernmentGatewayAdminConnector]
   val mockTaxEnrolementConnector: TaxEnrolmentsConnector = mock[TaxEnrolmentsConnector]
 

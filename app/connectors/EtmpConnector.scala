@@ -25,26 +25,25 @@ import play.api.libs.json.JsValue
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
-import uk.gov.hmrc.play.audit.model.{Audit, EventTypes}
+import uk.gov.hmrc.play.audit.model.EventTypes
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class DefaultETMPConnector @Inject()(val servicesConfig: ServicesConfig,
+class DefaultEtmpConnector @Inject()(val servicesConfig: ServicesConfig,
                                      val auditConnector: AuditConnector,
                                      val metrics: ServiceMetrics,
-                                     val http: HttpClient) extends ETMPConnector {
-  val serviceURL = servicesConfig.baseUrl("etmp-hod")
+                                     val http: HttpClient) extends EtmpConnector {
+  val serviceURL: String = servicesConfig.baseUrl("etmp-hod")
   val baseURI = "annual-tax-enveloped-dwellings"
   val subscribeUri = "subscribe"
   val urlHeaderEnvironment: String = servicesConfig.getConfString("etmp-hod.environment", "")
   val urlHeaderAuthorization: String = s"Bearer ${servicesConfig.getConfString("etmp-hod.authorization-token", "")}"
-  val audit: Audit = new Audit("ated-subscription", auditConnector)
 }
 
-trait ETMPConnector extends RawResponseReads with Auditable {
+trait EtmpConnector extends RawResponseReads with Auditable {
 
   def serviceURL: String
   def baseURI: String
@@ -53,13 +52,18 @@ trait ETMPConnector extends RawResponseReads with Auditable {
   def urlHeaderAuthorization: String
   def metrics: ServiceMetrics
   def http: HttpClient
+  val regimeURI = "/registration/details"
+
+  def atedRegime(safeId: String)(implicit headerCarrier: HeaderCarrier): Future[HttpResponse] = {
+    http.GET(s"""$serviceURL$regimeURI?safeid=$safeId&regime=ATED""")
+  }
 
   def subscribeAted(data: JsValue)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
-    implicit val hc = createHeaderCarrier()
+    implicit val hc: HeaderCarrier = createHeaderCarrier()
     val timerContext = metrics.startTimer(MetricsEnum.EtmpSubscribeAted)
     http.POST[JsValue, HttpResponse](s"$serviceURL/$baseURI/$subscribeUri", data) map {
       response =>
-        val stopContext = timerContext.stop()
+        timerContext.stop()
         auditSubscribe(data, response)
         response.status match {
           case OK =>

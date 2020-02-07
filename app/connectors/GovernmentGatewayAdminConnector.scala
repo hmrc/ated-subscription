@@ -39,7 +39,7 @@ class DefaultGovernmentGatewayAdminConnector @Inject()(val servicesConfig: Servi
                                                        val http: HttpClient) extends GovernmentGatewayAdminConnector {
   val serviceURL: String = servicesConfig.baseUrl("government-gateway-admin")
   val addKnownFactsURI = "known-facts"
-  val audit: Audit = new Audit("ated-subscription", auditConnector)
+  override val audit: Audit = new Audit("ated-subscription", auditConnector)
 }
 
 trait GovernmentGatewayAdminConnector extends RawResponseReads with Auditable {

@@ -42,14 +42,14 @@ class TaxEnrolmentsConnectorSpec extends PlaySpec with GuiceOneServerPerSuite wi
 
   val mockHttp: HttpClient = mock[HttpClient]
   val mockServiceMetrics: ServiceMetrics = app.injector.instanceOf[ServiceMetrics]
-
   val mockServiceUrl = "tax-enrolments"
 
   trait Setup {
     class TestTaxEnrolmentsConnector extends TaxEnrolmentsConnector {
       val serviceUrl: String = mockServiceUrl
       val emacBaseUrl = s"$serviceUrl/tax-enrolments"
-      override val audit: Audit = new TestAudit(app.injector.instanceOf[AuditConnector])
+      override val auditConnector: AuditConnector = app.injector.instanceOf[AuditConnector]
+      override val audit: Audit = new TestAudit(auditConnector)
       override val metrics: ServiceMetrics = mockServiceMetrics
       override val http: HttpClient = mockHttp
     }

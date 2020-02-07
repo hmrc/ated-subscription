@@ -16,7 +16,7 @@
 
 package services
 
-import connectors.{ETMPConnector, GovernmentGatewayAdminConnector, TaxEnrolmentsConnector}
+import connectors.{EtmpConnector, GovernmentGatewayAdminConnector, TaxEnrolmentsConnector}
 import javax.inject.Inject
 import models.{KnownFact, KnownFactsForService, Verifier, Verifiers}
 import play.api.http.Status._
@@ -28,7 +28,7 @@ import utils.GovernmentGatewayConstants
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class DefaultSubscribeService @Inject()(val etmpConnector: ETMPConnector,
+class DefaultSubscribeService @Inject()(val etmpConnector: EtmpConnector,
                                         val ggAdminConnector: GovernmentGatewayAdminConnector,
                                         val taxEnrolmentsConnector: TaxEnrolmentsConnector,
                                         val servicesConfig: ServicesConfig) extends SubscribeService {
@@ -37,7 +37,7 @@ class DefaultSubscribeService @Inject()(val etmpConnector: ETMPConnector,
 
 trait SubscribeService {
 
-  def etmpConnector: ETMPConnector
+  def etmpConnector: EtmpConnector
   def ggAdminConnector: GovernmentGatewayAdminConnector
   def taxEnrolmentsConnector: TaxEnrolmentsConnector
 
