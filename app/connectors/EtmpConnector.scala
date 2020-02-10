@@ -55,16 +55,21 @@ trait EtmpConnector extends RawResponseReads with Auditable {
   val regimeURI = "/registration/details"
 
   def atedRegime(safeId: String)(implicit headerCarrier: HeaderCarrier): Future[HttpResponse] = {
-    http.GET(s"""$serviceURL$regimeURI?safeid=$safeId&regime=ATED""")
+    implicit val hc: HeaderCarrier = createHeaderCarrier(headerCarrier)
+    http.GET[HttpResponse](
+      s"""$serviceURL$regimeURI?safeid=$safeId&regime=ATED"""
+    )(implicitly, hc, implicitly)
   }
 
-  def subscribeAted(data: JsValue)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
-    implicit val hc: HeaderCarrier = createHeaderCarrier()
+  def subscribeAted(data: JsValue)(implicit headerCarrier: HeaderCarrier): Future[HttpResponse] = {
+    implicit val hc: HeaderCarrier = createHeaderCarrier(headerCarrier)
     val timerContext = metrics.startTimer(MetricsEnum.EtmpSubscribeAted)
-    http.POST[JsValue, HttpResponse](s"$serviceURL/$baseURI/$subscribeUri", data) map {
+    http.POST[JsValue, HttpResponse](
+      s"$serviceURL/$baseURI/$subscribeUri", data
+    )(implicitly, implicitly, hc, implicitly) map {
       response =>
         timerContext.stop()
-        auditSubscribe(data, response)
+        auditSubscribe(data, response)(hc)
         response.status match {
           case OK =>
             metrics.incrementSuccessCounter(MetricsEnum.EtmpSubscribeAted)
@@ -72,7 +77,7 @@ trait EtmpConnector extends RawResponseReads with Auditable {
           case status =>
             metrics.incrementFailedCounter(MetricsEnum.EtmpSubscribeAted)
             Logger.warn(s"[ETMPConnector][subscribeAted] - status: $status")
-            doFailedAudit("subscribeAtedFailed", data.toString, response.body)
+            doFailedAudit("subscribeAtedFailed", data.toString, response.body)(hc)
             response
         }
     }
@@ -114,8 +119,8 @@ trait EtmpConnector extends RawResponseReads with Auditable {
         "submittedCountry" -> (data \\ "countryCode").head.as[String]))
   }
 
-  def createHeaderCarrier(): HeaderCarrier = {
-    HeaderCarrier(extraHeaders = Seq("Environment" -> urlHeaderEnvironment),
+  def createHeaderCarrier(hc: HeaderCarrier): HeaderCarrier = {
+    hc.withExtraHeaders("Environment" -> urlHeaderEnvironment).copy(
       authorization = Some(Authorization(urlHeaderAuthorization)))
   }
 
