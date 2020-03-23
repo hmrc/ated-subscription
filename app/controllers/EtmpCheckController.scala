@@ -38,7 +38,9 @@ class EtmpCheckController @Inject()(cc: ControllerComponents,
     businessCustomerDetails match {
       case Some(bcd) =>
         etmpRegimeService.checkEtmpBusinessPartnerExists(bcd.safeId, bcd).map {
-          case Some(_) => Ok
+          case Some(etmpRegistrationDetails) =>
+            val responseJson = Json.obj("regimeRefNumber" -> etmpRegistrationDetails.regimeRefNumber)
+            Ok(responseJson)
           case _ =>
             Logger.warn("[EtmpCheckController][checkEtmp] Could not retrieve/upsert for checkEtmp")
             NoContent
