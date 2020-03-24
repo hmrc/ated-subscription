@@ -314,6 +314,15 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
 
         await(result).status must be(OK)
       }
+
+      "provided only a tax ref" in {
+        when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any()))
+          .thenReturn(Future.successful(HttpResponse(OK)))
+
+        val result = TestEtmpRegimeService.upsertEacdEnrolment("safeId", Some("UTR"), None, "atedRefNumber")
+
+        await(result).status must be(OK)
+      }
     }
 
     "failed to upsert eacd enrolment" when {
@@ -324,6 +333,10 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
 
         val result = TestEtmpRegimeService.upsertEacdEnrolment("safeId", Some("UTR"), Some("postcode"), "atedRefNumber")
         intercept[RuntimeException](await(result))
+      }
+
+      "no enrolment verifiers" in {
+        intercept[RuntimeException](TestEtmpRegimeService.upsertEacdEnrolment("safeId", None, None, "atedRefNumber"))
       }
     }
   }
