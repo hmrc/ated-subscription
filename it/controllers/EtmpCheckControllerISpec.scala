@@ -98,7 +98,7 @@ class EtmpCheckControllerISpec extends IntegrationSpec with LoginStub {
           )
         )
 
-        stubFor(put(urlMatching("/enrolment-store-proxy/enrolment-store/enrolments/" +
+        stubFor(put(urlMatching("/tax-enrolments/enrolments/" +
           "HMRC-ATED-ORG~ATEDRefNumber~XAAW00000123456"))
           .willReturn(
             aResponse()

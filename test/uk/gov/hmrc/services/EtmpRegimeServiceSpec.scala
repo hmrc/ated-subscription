@@ -18,10 +18,11 @@ package uk.gov.hmrc.services
 
 import java.util.UUID
 
-import connectors.{EtmpConnector, EnrolmentStoreConnector}
+import connectors.{EtmpConnector, TaxEnrolmentsConnector}
 import models.{Address, BusinessCustomerDetails, EtmpRegistrationDetails}
 import org.mockito.ArgumentMatchers
-import org.mockito.Mockito.when
+import org.mockito.Mockito.{when, reset}
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.PlaySpec
 import play.api.libs.json.{JsObject, Json}
@@ -35,13 +36,13 @@ import uk.gov.hmrc.utils.TestJson
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson {
+class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson with BeforeAndAfterEach {
 
   implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
 
   val mockEtmpConnector: EtmpConnector = mock[EtmpConnector]
   val mockAuthConnector: AuthConnector = mock[AuthConnector]
-  val mockEnrolmentStore: EnrolmentStoreConnector = mock[EnrolmentStoreConnector]
+  val mockTaxEnrolments: TaxEnrolmentsConnector = mock[TaxEnrolmentsConnector]
   val safeId: String = "XE0001234567890"
   val sapNumber: String = "1234567890"
   val businessName: String = "ACME Trading"
@@ -69,8 +70,12 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson {
     agentReferenceNumber = Some(agentRef)
   )
 
+  override def beforeEach(): Unit = {
+    reset(mockEtmpConnector, mockTaxEnrolments, mockAuthConnector)
+    super.beforeEach()
+  }
 
-  object TestEtmpRegimeService extends EtmpRegimeService(mockEtmpConnector, mockEnrolmentStore, mockAuthConnector)
+  object TestEtmpRegimeService extends EtmpRegimeService(mockEtmpConnector, mockTaxEnrolments, mockAuthConnector)
 
   "getEtmpBusinessDetails" should {
 
@@ -103,7 +108,7 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson {
         .thenReturn(Future.successful(Some(AffinityGroup.Organisation)))
       when(mockEtmpConnector.atedRegime(ArgumentMatchers.eq(safeId))(ArgumentMatchers.any()))
         .thenReturn(Future.successful(HttpResponse(OK, Some(etmpWithRegimeOrgResponse))))
-      when(mockEnrolmentStore.upsertEnrolment(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any()))
+      when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any()))
         .thenReturn(Future.successful(HttpResponse(NO_CONTENT)))
 
       val result = TestEtmpRegimeService.checkEtmpBusinessPartnerExists(safeId, businessCustomerDetails)
@@ -139,7 +144,7 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson {
         .thenReturn(Future.successful(Some(AffinityGroup.Organisation)))
       when(mockEtmpConnector.atedRegime(ArgumentMatchers.eq(safeId))(ArgumentMatchers.any()))
         .thenReturn(Future.successful(HttpResponse(OK, Some(etmpWithRegimeOrgResponse))))
-      when(mockEnrolmentStore.upsertEnrolment(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any()))
+      when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any()))
         .thenReturn(Future.failed(new RuntimeException("failure to return registration details")))
 
       val result = TestEtmpRegimeService.checkEtmpBusinessPartnerExists(safeId, businessCustomerDetails)
@@ -301,20 +306,11 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson {
   "upsertEacdEnrolment" should {
     "upsert an eacd enrolment" when {
 
-      "provided details to enrol for SOP businessType" in {
-        when(mockEnrolmentStore.upsertEnrolment(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any()))
+      "provided details to enrol for a business" in {
+        when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any()))
           .thenReturn(Future.successful(HttpResponse(OK)))
 
-        val result = TestEtmpRegimeService.upsertEacdEnrolment("safeId", Some("UTR"), "SOP", "postcode", "atedRefNumber")
-
-        await(result).status must be(OK)
-      }
-
-      "provided details to enrol for non-SOP businessType" in {
-        when(mockEnrolmentStore.upsertEnrolment(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any()))
-          .thenReturn(Future.successful(HttpResponse(OK)))
-
-        val result = TestEtmpRegimeService.upsertEacdEnrolment("safeId", Some("UTR"), "BusinessType", "postcode", "atedRefNumber")
+        val result = TestEtmpRegimeService.upsertEacdEnrolment("safeId", Some("UTR"), Some("postcode"), "atedRefNumber")
 
         await(result).status must be(OK)
       }
@@ -323,10 +319,10 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson {
     "failed to upsert eacd enrolment" when {
 
       "provided details to enrolment" in {
-        when(mockEnrolmentStore.upsertEnrolment(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any()))
+        when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any()))
           .thenReturn(Future.failed(new RuntimeException("failed to upsert enrolment")))
 
-        val result = TestEtmpRegimeService.upsertEacdEnrolment("safeId", Some("UTR"), "BusinessType", "postcode", "atedRefNumber")
+        val result = TestEtmpRegimeService.upsertEacdEnrolment("safeId", Some("UTR"), Some("postcode"), "atedRefNumber")
         intercept[RuntimeException](await(result))
       }
     }

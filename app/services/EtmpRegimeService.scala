@@ -16,23 +16,22 @@
 
 package services
 
+import connectors.{EtmpConnector, TaxEnrolmentsConnector}
 import javax.inject.Inject
+import models.{BusinessCustomerDetails, EtmpRegistrationDetails, Verifier, Verifiers}
 import play.api.Logger
 import play.api.http.Status._
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector, AuthorisedFunctions, User}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import connectors.{EtmpConnector, EnrolmentStoreConnector}
-import models.{BusinessCustomerDetails, EnrolmentVerifiers, EtmpRegistrationDetails}
+import utils.GovernmentGatewayConstants._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 class EtmpRegimeService @Inject()(etmpConnector: EtmpConnector,
-                                  val enrolmentStoreConnector: EnrolmentStoreConnector,
+                                  val taxEnrolmentsConnector: TaxEnrolmentsConnector,
                                   val authConnector: AuthConnector) extends AuthorisedFunctions {
-
-  private val ATED_SERVICE_NAME = "HMRC-ATED-ORG"
 
   def getEtmpBusinessDetails(safeId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[EtmpRegistrationDetails]] = {
     etmpConnector.atedRegime(safeId).map { response =>
@@ -65,27 +64,40 @@ class EtmpRegimeService @Inject()(etmpConnector: EtmpConnector,
     }
   }
 
-  private def createVerifiers(safeId: String, utr: Option[String], businessType: String, postcode: String) = {
-    val utrTuple = businessType match {
-      case "SOP" => "SAUTR" -> utr.getOrElse("")
-      case _ => "CTUTR" -> utr.getOrElse("")
-    }
-    val verifierTuples = Seq(
-      "Postcode" -> postcode,
-      "SAFEID" -> safeId
-    ) :+ utrTuple
+  private def createEnrolmentVerifiers(safeId: String, utr: Option[String], postcode: Option[String]): Verifiers = {
+    val safeIdVerifier = Verifier(VerifierSafeId, safeId)
 
-    EnrolmentVerifiers(verifierTuples: _*)
+    (utr, postcode) match {
+      case (Some(uniqueTaxRef), Some(ukClientPostCode)) =>
+        Verifiers(List(
+          Verifier(VerifierPostalCode, ukClientPostCode),
+          Verifier(VerifierCtUtr, uniqueTaxRef),
+          safeIdVerifier)
+        )
+      case (None, Some(nonUkClientPostCode)) =>
+        Verifiers(List(
+          Verifier(VerifierNonUKPostalCode, nonUkClientPostCode),
+          safeIdVerifier)
+        )
+      case (Some(uniqueTaxRef), None) =>
+        Verifiers(List(Verifier(VerifierCtUtr, uniqueTaxRef), safeIdVerifier))
+      case (_, _) =>
+        throw new RuntimeException(s"[NewRegisterUserService][createEnrolmentVerifiers] - postalCode or utr must be supplied")
+    }
   }
 
   def upsertEacdEnrolment(safeId: String,
                           utr: Option[String],
-                          businessType: String,
-                          postcode: String,
+                          postcode: Option[String],
                           atedRefNumber: String)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
-    val enrolmentKey = s"$ATED_SERVICE_NAME~ATEDRefNumber~$atedRefNumber"
-    val enrolmentVerifiers = createVerifiers(safeId, utr, businessType, postcode)
-    enrolmentStoreConnector.upsertEnrolment(enrolmentKey, enrolmentVerifiers)
+    def validateVerifier(value: Option[String]): Option[String] =
+      value match {
+        case Some(x) if !x.trim().isEmpty => Some(x)
+        case _ => None
+      }
+
+    val enrolmentVerifiers = createEnrolmentVerifiers(safeId, validateVerifier(utr), validateVerifier(postcode))
+    taxEnrolmentsConnector.addKnownFacts(enrolmentVerifiers, atedRefNumber)
   }
 
   def checkEtmpBusinessPartnerExists(safeId: String,
@@ -99,8 +111,7 @@ class EtmpRegimeService @Inject()(etmpConnector: EtmpConnector,
               upsertEacdEnrolment(
                 safeId,
                 businessCustomerDetails.utr,
-                businessCustomerDetails.businessType.getOrElse(""),
-                businessCustomerDetails.businessAddress.postcode.getOrElse("").replaceAll("\\s+", ""),
+                businessCustomerDetails.businessAddress.postcode.map(_.replaceAll("\\s+", "")),
                 etmpRegDetails.regimeRefNumber
               ) map { response =>
                 response.status match {
@@ -124,7 +135,7 @@ class EtmpRegimeService @Inject()(etmpConnector: EtmpConnector,
   }
 
   def compareOptionalStrings(bcdValue: Option[String], erdValue: Option[String]): Boolean = {
-    if(bcdValue.isEmpty && erdValue.isEmpty) {
+    if (bcdValue.isEmpty && erdValue.isEmpty) {
       true
     } else {
       bcdValue.map(_.toUpperCase).contains(erdValue.map(_.toUpperCase).getOrElse(""))
@@ -134,9 +145,9 @@ class EtmpRegimeService @Inject()(etmpConnector: EtmpConnector,
   def matchOrg(bcd: BusinessCustomerDetails, erd: EtmpRegistrationDetails): Boolean = {
     Map(
       "businessName" -> erd.organisationName.map(_.toUpperCase).contains(bcd.businessName.toUpperCase),
-      "sapNumber" -> (bcd.sapNumber.toUpperCase == erd.sapNumber.toUpperCase),
-      "safeId" -> (bcd.safeId.toUpperCase == erd.safeId.toUpperCase),
-      "agentRef" -> compareOptionalStrings(bcd.agentReferenceNumber, erd.agentReferenceNumber)
+      "sapNumber"    -> (bcd.sapNumber.toUpperCase == erd.sapNumber.toUpperCase),
+      "safeId"       -> (bcd.safeId.toUpperCase == erd.safeId.toUpperCase),
+      "agentRef"     -> compareOptionalStrings(bcd.agentReferenceNumber, erd.agentReferenceNumber)
     ).partition{case (_, v) => v} match {
       case (_, failures) if failures.isEmpty => true
       case (_, failures) =>

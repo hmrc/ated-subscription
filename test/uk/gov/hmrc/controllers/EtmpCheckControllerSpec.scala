@@ -23,6 +23,7 @@ import org.mockito.Mockito.when
 import org.scalatest.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import org.scalatestplus.play.PlaySpec
+import play.api.libs.json.Json
 import play.api.mvc.ControllerComponents
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
@@ -58,6 +59,7 @@ class EtmpCheckControllerSpec extends PlaySpec with MockitoSugar with TestJson w
           val result = TestEtmpCheckController.checkEtmp().apply(FakeRequest().withJsonBody(etmpCheckOrganisation))
 
           status(result) must be(OK)
+          contentAsString(result) mustBe Json.obj("regimeRefNumber" -> "regRef").toString()
         }
       }
     }
