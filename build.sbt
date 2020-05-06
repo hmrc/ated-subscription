@@ -4,20 +4,20 @@ import sbt.{Def, _}
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
 import uk.gov.hmrc.versioning.SbtGitVersioning.autoImport.majorVersion
 
-trait MicroService {
-
   import uk.gov.hmrc._
   import DefaultBuildSettings._
   import play.sbt.routes.RoutesKeys.routesGenerator
   import uk.gov.hmrc.SbtAutoBuildPlugin
   import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
   import uk.gov.hmrc.versioning.SbtGitVersioning
-  import TestPhases.oneForkedJvmPerTest
+import TestPhases.{TemplateItTest, TemplateTest}
+import uk.gov.hmrc.DefaultBuildSettings.{addTestReportOption, defaultSettings, scalaSettings}
+import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin.publishingSettings
 
-  val appName: String
+  val appName: String = "ated-subscription"
 
-  val appDependencies: Seq[ModuleID]
-  lazy val plugins: Seq[Plugins] = Seq(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin, SbtArtifactory)
+lazy val appDependencies : Seq[ModuleID] = AppDependencies()
+lazy val plugins: Seq[Plugins] = Seq(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin, SbtArtifactory)
   lazy val playSettings: Seq[Setting[_]] = Seq.empty
 
   lazy val scoverageSettings: Seq[Def.Setting[_ >: String with Double with Boolean]] = {
@@ -41,7 +41,7 @@ trait MicroService {
     .settings(
       addTestReportOption(IntegrationTest, "int-test-reports"),
       inConfig(IntegrationTest)(Defaults.itSettings),
-      scalaVersion := "2.11.11",
+      scalaVersion := "2.12.11",
       targetJvm := "jvm-1.8",
       libraryDependencies ++= appDependencies,
       parallelExecution in Test := false,
@@ -50,9 +50,11 @@ trait MicroService {
       routesGenerator := InjectedRoutesGenerator,
       Keys.fork                  in IntegrationTest :=  false,
       unmanagedSourceDirectories in IntegrationTest :=  (baseDirectory in IntegrationTest)(base => Seq(base / "it")).value,
-      testGrouping               in IntegrationTest :=  oneForkedJvmPerTest((definedTests in IntegrationTest).value),
       parallelExecution in IntegrationTest := false
     )
+    .settings(inConfig(TemplateTest)(Defaults.testSettings): _*)
+    .settings(inConfig(TemplateItTest)(Defaults.itSettings): _*)
+    .configs(IntegrationTest)
     .settings(
       resolvers := Seq(
         Resolver.bintrayRepo("hmrc", "releases"),
@@ -61,4 +63,6 @@ trait MicroService {
       )
     )
     .enablePlugins(SbtDistributablesPlugin, SbtAutoBuildPlugin, SbtGitVersioning)
-}
+    .disablePlugins(JUnitXmlReportPlugin)
+
+
