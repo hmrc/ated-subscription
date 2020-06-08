@@ -306,11 +306,20 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
   "upsertEacdEnrolment" should {
     "upsert an eacd enrolment" when {
 
-      "provided details to enrol for a business" in {
+      "provided details to enrol for a CT business" in {
         when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any()))
           .thenReturn(Future.successful(HttpResponse(OK)))
 
-        val result = TestEtmpRegimeService.upsertEacdEnrolment("safeId", Some("UTR"), Some("postcode"), "atedRefNumber")
+        val result = TestEtmpRegimeService.upsertEacdEnrolment("safeId", Some("UTR"), Some("postcode"), "atedRefNumber", "LTD")
+
+        await(result).status must be(OK)
+      }
+
+      "provided details to enrol for a SOP business" in {
+        when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any()))
+          .thenReturn(Future.successful(HttpResponse(OK)))
+
+        val result = TestEtmpRegimeService.upsertEacdEnrolment("safeId", Some("UTR"), Some("postcode"), "atedRefNumber", "SOP")
 
         await(result).status must be(OK)
       }
@@ -319,7 +328,7 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
         when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any()))
           .thenReturn(Future.successful(HttpResponse(OK)))
 
-        val result = TestEtmpRegimeService.upsertEacdEnrolment("safeId", Some("UTR"), None, "atedRefNumber")
+        val result = TestEtmpRegimeService.upsertEacdEnrolment("safeId", Some("UTR"), None, "atedRefNumber", "LTD")
 
         await(result).status must be(OK)
       }
@@ -327,16 +336,24 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
 
     "failed to upsert eacd enrolment" when {
 
-      "provided details to enrolment" in {
+      "provided details to enrolment for LTD" in {
         when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any()))
           .thenReturn(Future.failed(new RuntimeException("failed to upsert enrolment")))
 
-        val result = TestEtmpRegimeService.upsertEacdEnrolment("safeId", Some("UTR"), Some("postcode"), "atedRefNumber")
+        val result = TestEtmpRegimeService.upsertEacdEnrolment("safeId", Some("UTR"), Some("postcode"), "atedRefNumber", "LTD")
+        intercept[RuntimeException](await(result))
+      }
+
+      "provided details to enrolment for SOP" in {
+        when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any()))
+          .thenReturn(Future.failed(new RuntimeException("failed to upsert enrolment")))
+
+        val result = TestEtmpRegimeService.upsertEacdEnrolment("safeId", Some("UTR"), Some("postcode"), "atedRefNumber", "SOP")
         intercept[RuntimeException](await(result))
       }
 
       "no enrolment verifiers" in {
-        intercept[RuntimeException](TestEtmpRegimeService.upsertEacdEnrolment("safeId", None, None, "atedRefNumber"))
+        intercept[RuntimeException](TestEtmpRegimeService.upsertEacdEnrolment("safeId", None, None, "atedRefNumber", "LTD"))
       }
     }
   }

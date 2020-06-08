@@ -64,14 +64,19 @@ class EtmpRegimeService @Inject()(etmpConnector: EtmpConnector,
     }
   }
 
-  private def createEnrolmentVerifiers(safeId: String, utr: Option[String], postcode: Option[String]): Verifiers = {
+  private def createEnrolmentVerifiers(safeId: String, utr: Option[String], postcode: Option[String], businessType: String): Verifiers = {
     val safeIdVerifier = Verifier(VerifierSafeId, safeId)
+
+    val utrType = businessType match {
+      case "SOP" => VerifierSaUtr
+      case _     => VerifierCtUtr
+    }
 
     (utr, postcode) match {
       case (Some(uniqueTaxRef), Some(ukClientPostCode)) =>
         Verifiers(List(
           Verifier(VerifierPostalCode, ukClientPostCode),
-          Verifier(VerifierCtUtr, uniqueTaxRef),
+          Verifier(utrType, uniqueTaxRef),
           safeIdVerifier)
         )
       case (None, Some(nonUkClientPostCode)) =>
@@ -80,7 +85,7 @@ class EtmpRegimeService @Inject()(etmpConnector: EtmpConnector,
           safeIdVerifier)
         )
       case (Some(uniqueTaxRef), None) =>
-        Verifiers(List(Verifier(VerifierCtUtr, uniqueTaxRef), safeIdVerifier))
+        Verifiers(List(Verifier(utrType, uniqueTaxRef), safeIdVerifier))
       case (_, _) =>
         throw new RuntimeException(s"[NewRegisterUserService][createEnrolmentVerifiers] - postalCode or utr must be supplied")
     }
@@ -89,14 +94,15 @@ class EtmpRegimeService @Inject()(etmpConnector: EtmpConnector,
   def upsertEacdEnrolment(safeId: String,
                           utr: Option[String],
                           postcode: Option[String],
-                          atedRefNumber: String)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
+                          atedRefNumber: String,
+                          businessType: String)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
     def validateVerifier(value: Option[String]): Option[String] =
       value match {
         case Some(x) if !x.trim().isEmpty => Some(x)
         case _ => None
       }
 
-    val enrolmentVerifiers = createEnrolmentVerifiers(safeId, validateVerifier(utr), validateVerifier(postcode))
+    val enrolmentVerifiers = createEnrolmentVerifiers(safeId, validateVerifier(utr), validateVerifier(postcode), businessType)
     taxEnrolmentsConnector.addKnownFacts(enrolmentVerifiers, atedRefNumber)
   }
 
@@ -112,7 +118,8 @@ class EtmpRegimeService @Inject()(etmpConnector: EtmpConnector,
                 safeId,
                 businessCustomerDetails.utr,
                 businessCustomerDetails.businessAddress.postcode.map(_.replaceAll("\\s+", "")),
-                etmpRegDetails.regimeRefNumber
+                etmpRegDetails.regimeRefNumber,
+                businessCustomerDetails.businessType.getOrElse("")
               ) map { response =>
                 response.status match {
                   case NO_CONTENT => Some(etmpRegDetails)

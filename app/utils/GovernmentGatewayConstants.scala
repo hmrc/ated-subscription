@@ -24,6 +24,7 @@ object GovernmentGatewayConstants {
   val VerifierPostalCode = "Postcode"
   val VerifierNonUKPostalCode = "NonUKPostalCode"
   val VerifierCtUtr = "CTUTR"
+  val VerifierSaUtr = "SAUTR"
   val VerifierSafeId = "SAFEID"
 
 }
