@@ -83,6 +83,7 @@ class SubscribeServiceSpec extends PlaySpec with OneServerPerSuite with MockitoS
       |      "email": "aa@aa.com"
       |    }
       | }],
+      | "businessType": "Corporate Body",
       | "utr":"12345",
       | "isNonUKClientRegisteredByAgent": false,
       | "knownFactPostcode": "NE1 1EN"}
@@ -140,6 +141,7 @@ class SubscribeServiceSpec extends PlaySpec with OneServerPerSuite with MockitoS
         |      "email": "aa@aa.com"
         |    }
         | }],
+        |  "businessType": "LLP",
         |  "utr":"12345",
         |  "isNonUKClientRegisteredByAgent": false}
         |

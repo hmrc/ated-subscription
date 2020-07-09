@@ -104,18 +104,23 @@ trait SubscribeService {
   }
 
   private def createEnrolmentVerifiers(response: HttpResponse, data: JsValue): Verifiers = {
+    val utrType = (data \ "businessType").asOpt[String] match {
+      case Some("LLP") | Some("Partnership") => GovernmentGatewayConstants.VerifierSaUtr
+      case _ => GovernmentGatewayConstants.VerifierCtUtr
+    }
+
     getUtrAndPostCode(data) match {
       case (Some(uniqueTaxRef), Some(ukClientPostCode)) =>
         Verifiers(List(
           Verifier(GovernmentGatewayConstants.VerifierPostalCode, ukClientPostCode),
-          Verifier(GovernmentGatewayConstants.VerifierCtUtr, uniqueTaxRef))
+          Verifier(utrType, uniqueTaxRef))
         )
       case (None, Some(nonUkClientPostCode)) =>
         Verifiers(List(
           Verifier(GovernmentGatewayConstants.VerifierNonUKPostalCode, nonUkClientPostCode))
         ) //N.B. Non-UK Clients might use the property UK Postcode or their own Non-UK Postal Code
       case (Some(uniqueTaxRef), None) =>
-        Verifiers(List(Verifier(GovernmentGatewayConstants.VerifierCtUtr, uniqueTaxRef)))
+        Verifiers(List(Verifier(utrType, uniqueTaxRef)))
       case (_, _) =>
         throw new RuntimeException(s"[NewRegisterUserService][subscribeAted][createEMACEnrolRequest] - postalCode or utr must be supplied")
     }
