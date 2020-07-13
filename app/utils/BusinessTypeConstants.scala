@@ -16,14 +16,22 @@
 
 package utils
 
-object GovernmentGatewayConstants {
+object BusinessTypeConstants {
 
-  val AtedServiceName = "HMRC-ATED-ORG"
-  val AtedReferenceNoType = "ATEDRefNumber"
+  val limitedCompany = "Corporate Body"
+  val businessPartnership = "Partnership"
+  val limitedPartnership = "Partnership"
+  val limitedLiabilityPartnership = "LLP"
+  val unitTrust = "Corporate Body"
+  val unlimitedCompany = "Corporate Body"
+  val overseasCompany = "Non UK-based Company"
 
-  val VerifierPostalCode = "Postcode"
-  val VerifierNonUKPostalCode = "NonUKPostalCode"
-  val VerifierCtUtr = "CTUTR"
-  val VerifierSaUtr = "SAUTR"
+  def saBusinessTypes: List[String] = {
+    List(businessPartnership, limitedPartnership, limitedLiabilityPartnership, overseasCompany)
+  }
+
+  def allBusinessTypes: List[String] = {
+    saBusinessTypes.++(List(limitedCompany, unitTrust, unlimitedCompany))
+  }
 
 }

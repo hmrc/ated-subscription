@@ -129,7 +129,7 @@ class EtmpConnectorSpec extends PlaySpec with GuiceOneServerPerSuite with Mockit
       when(mockWSHttp.POST[JsValue, HttpResponse]
         (ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(),
         ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any()))
-        .thenReturn(Future.successful(HttpResponse(OK, responseJson = Some(successfulSubscribeJson))))
+        .thenReturn(Future.successful(HttpResponse(OK, successfulSubscribeJson.toString)))
       val result: Future[HttpResponse] = connector.subscribeAted(inputJson)
       await(result).json must be(successfulSubscribeJson)
     }
@@ -139,7 +139,7 @@ class EtmpConnectorSpec extends PlaySpec with GuiceOneServerPerSuite with Mockit
       when(mockWSHttp.POST[JsValue, HttpResponse]
         (ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(),
         ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any()))
-        .thenReturn(Future.successful(HttpResponse(OK, responseJson = Some(successfulSubscribeJson))))
+        .thenReturn(Future.successful(HttpResponse(OK, successfulSubscribeJson.toString)))
       val result: Future[HttpResponse] = connector.subscribeAted(inputJsonNoPostcode)
       await(result).json must be(successfulSubscribeJson)
     }
@@ -149,7 +149,7 @@ class EtmpConnectorSpec extends PlaySpec with GuiceOneServerPerSuite with Mockit
       when(mockWSHttp.POST[JsValue, HttpResponse]
         (ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(),
         ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any()))
-        .thenReturn(Future.successful(HttpResponse(BAD_REQUEST, responseJson = Some(unsuccessfulSubscribeJson))))
+        .thenReturn(Future.successful(HttpResponse(BAD_REQUEST, unsuccessfulSubscribeJson.toString)))
       val result: Future[HttpResponse] = connector.subscribeAted(inputJson)
       await(result).json must be(unsuccessfulSubscribeJson)
     }
@@ -159,7 +159,7 @@ class EtmpConnectorSpec extends PlaySpec with GuiceOneServerPerSuite with Mockit
     "return an HttpResponse" in new Setup {
       implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
       when(mockWSHttp.GET[HttpResponse](ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any()))
-        .thenReturn(Future.successful(HttpResponse(OK, responseJson = Some(etmpWithRegimeOrgResponse))))
+        .thenReturn(Future.successful(HttpResponse(OK, etmpWithRegimeOrgResponse.toString)))
       val result: Future[HttpResponse] = connector.atedRegime("SAFEID123")
 
       await(result).status must be(OK)

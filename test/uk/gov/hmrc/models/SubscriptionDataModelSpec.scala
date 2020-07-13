@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.models
 
-import models.{Address, BusinessCustomerDetails, EtmpRegistrationDetails}
+import models.{Address, BusinessCustomerDetails, BusinessPartnerDetails}
 import org.scalatestplus.play.PlaySpec
 import play.api.libs.json.{JsObject, JsSuccess, Json}
 import play.api.libs.json._
@@ -29,16 +29,13 @@ class SubscriptionDataModelSpec extends PlaySpec with TestJson {
 
       "given valid Json" in {
 
-        EtmpRegistrationDetails.etmpReader.reads(etmpWithRegimeOrgResponse) must be(JsSuccess(
-          EtmpRegistrationDetails(
+        BusinessPartnerDetails.reads.reads(etmpWithRegimeOrgResponse) must be(JsSuccess(
+          BusinessPartnerDetails(
             organisationName = Some("ACME Trading"),
             sapNumber = "1234567890",
             safeId = "XE0001234567890",
-            isAGroup = Some(false),
             regimeRefNumber = "XAAW00000123456",
-            agentReferenceNumber = Some("AARN1234567"),
-            firstName = None,
-            lastName = None
+            agentReferenceNumber = Some("AARN1234567")
           )
         ))
       }
@@ -54,10 +51,9 @@ class SubscriptionDataModelSpec extends PlaySpec with TestJson {
 
         val etmpWithRegimeOrgResponseWithoutRefNumber = etmpWithRegimeOrgResponse.transform(jsonTransformer).get
 
-        val ex = intercept[RuntimeException](EtmpRegistrationDetails.etmpReader.reads(etmpWithRegimeOrgResponseWithoutRefNumber))
+        val ex = intercept[RuntimeException](BusinessPartnerDetails.reads.reads(etmpWithRegimeOrgResponseWithoutRefNumber))
 
-        ex.toString must be("java.lang.RuntimeException: " +
-          "[EtmpRegistrationDetails][etmpReader][reads] No regime ref number")
+        ex.toString must be("java.lang.RuntimeException: [SubscriptionDataModel][BusinessPartnerDetails][reads] No ATED regime ref number")
 
       }
     }
@@ -72,7 +68,7 @@ class SubscriptionDataModelSpec extends PlaySpec with TestJson {
         businessCustomerDetails must be(
           BusinessCustomerDetails(
             businessName = "ACME Limited",
-            businessType = Some("Corporate Body"),
+            businessType = "Corporate Body",
             businessAddress = Address(
               "1 Example Street", "Example View", Some("Example Town"), Some("Exampleshire"), Some("AA1 1AA"), "GB"
             ),

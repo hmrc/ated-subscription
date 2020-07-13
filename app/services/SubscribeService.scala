@@ -23,7 +23,8 @@ import play.api.http.Status._
 import play.api.libs.json.{JsObject, JsValue}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-import utils.GovernmentGatewayConstants
+import utils.BusinessTypeConstants._
+import utils.GovernmentGatewayConstants._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -57,7 +58,20 @@ trait SubscribeService {
     (isNonUKClientRegisteredByAgent, response.status) match {
       case (false, OK) =>
         if (isEmacFeatureToggle) {
-          taxEnrolmentsConnector.addKnownFacts(createEnrolmentVerifiers(response, data), getAtedReference(response))
+
+          val postcode = ((data \ "postcode").asOpt[String], (data \ "knownFactPostcode").asOpt[String]) match {
+            case (pc@Some(_), _) => pc
+            case (None, pc@Some(_)) => pc
+            case _ => None
+          }
+
+          taxEnrolmentsConnector.addKnownFacts(
+            createEnrolmentVerifiers(
+              utrType = getUtrType((data \ "businessType").as[String]),
+              utr = (data \ "utr").asOpt[String],
+              postcode = postcode,
+            ),
+            getAtedReference(response))
         } else {
           ggAdminConnector.addKnownFacts(createKnownFacts(response, data))
         }
@@ -67,7 +81,7 @@ trait SubscribeService {
   }
 
   private def stripJsonForEtmp(data: JsValue) = {
-    data.as[JsObject] - "utr" - "isNonUKClientRegisteredByAgent" - "knownFactPostcode"
+    data.as[JsObject] - "utr" - "isNonUKClientRegisteredByAgent" - "knownFactPostcode" - "businessType"
   }
 
   private def getUtrAndPostCode(data: JsValue): (Option[String], Option[String]) = {
@@ -95,34 +109,35 @@ trait SubscribeService {
       throw new RuntimeException(s"[SubscribeService][createKnownFacts] - postalCode or utr must be supplied:: $data)")
     }
 
-    val postCodeKnownFact = postCode.map(KnownFact(GovernmentGatewayConstants.VerifierPostalCode, _))
-    val utrKnownFact = utr.map(KnownFact(GovernmentGatewayConstants.VerifierCtUtr, _))
+    val postCodeKnownFact = postCode.map(KnownFact(VerifierPostalCode, _))
+    val utrKnownFact = utr.map(KnownFact(VerifierCtUtr, _))
 
     val utrAndPostcodeList = List(postCodeKnownFact, utrKnownFact).flatten
 
-    KnownFactsForService(List(KnownFact(GovernmentGatewayConstants.AtedReferenceNoType, getAtedReference(response))) ++ utrAndPostcodeList)
+    KnownFactsForService(List(KnownFact(AtedReferenceNoType, getAtedReference(response))) ++ utrAndPostcodeList)
   }
 
-  private def createEnrolmentVerifiers(response: HttpResponse, data: JsValue): Verifiers = {
-    val utrType = (data \ "businessType").asOpt[String] match {
-      case Some("LLP") | Some("Partnership") => GovernmentGatewayConstants.VerifierSaUtr
-      case _ => GovernmentGatewayConstants.VerifierCtUtr
-    }
+  def getUtrType(businessType: String): String = {
 
-    getUtrAndPostCode(data) match {
+    if(saBusinessTypes.contains(businessType)){
+      VerifierSaUtr
+    }else{
+      VerifierCtUtr
+    }
+  }
+
+  def createEnrolmentVerifiers(utrType: String, utr: Option[String], postcode: Option[String]): Verifiers = {
+    (utr, postcode) match {
       case (Some(uniqueTaxRef), Some(ukClientPostCode)) =>
-        Verifiers(List(
-          Verifier(GovernmentGatewayConstants.VerifierPostalCode, ukClientPostCode),
-          Verifier(utrType, uniqueTaxRef))
-        )
+        Verifiers(List(Verifier(VerifierPostalCode, ukClientPostCode), Verifier(utrType, uniqueTaxRef)))
       case (None, Some(nonUkClientPostCode)) =>
         Verifiers(List(
-          Verifier(GovernmentGatewayConstants.VerifierNonUKPostalCode, nonUkClientPostCode))
+          Verifier(VerifierNonUKPostalCode, nonUkClientPostCode))
         ) //N.B. Non-UK Clients might use the property UK Postcode or their own Non-UK Postal Code
       case (Some(uniqueTaxRef), None) =>
         Verifiers(List(Verifier(utrType, uniqueTaxRef)))
       case (_, _) =>
-        throw new RuntimeException(s"[NewRegisterUserService][subscribeAted][createEMACEnrolRequest] - postalCode or utr must be supplied")
+        throw new RuntimeException("[SubscribeService][createEnrolmentVerifiers] - postcode or utr must be supplied")
     }
   }
 
