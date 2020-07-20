@@ -18,24 +18,24 @@ package services
 
 import connectors.{EtmpConnector, TaxEnrolmentsConnector}
 import javax.inject.Inject
-import models.{BusinessCustomerDetails, EtmpRegistrationDetails, Verifier, Verifiers}
+import models.{BusinessCustomerDetails, BusinessPartnerDetails}
 import play.api.Logger
 import play.api.http.Status._
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector, AuthorisedFunctions, User}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import utils.GovernmentGatewayConstants._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 class EtmpRegimeService @Inject()(etmpConnector: EtmpConnector,
+                                  val subscribeService: SubscribeService,
                                   val taxEnrolmentsConnector: TaxEnrolmentsConnector,
                                   val authConnector: AuthConnector) extends AuthorisedFunctions {
 
-  def getEtmpBusinessDetails(safeId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[EtmpRegistrationDetails]] = {
+  def getEtmpBusinessDetails(safeId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[BusinessPartnerDetails]] = {
     etmpConnector.atedRegime(safeId).map { response =>
-      Try(EtmpRegistrationDetails.etmpReader.reads(response.json)) match {
+      Try(BusinessPartnerDetails.reads.reads(response.json)) match {
         case Success(value)   => value.asOpt
         case Failure(e)       =>
           Logger.info(s"[EtmpRegimeService][getEtmpBusinessDetails] Could not read ETMP response - $e")
@@ -44,9 +44,9 @@ class EtmpRegimeService @Inject()(etmpConnector: EtmpConnector,
     }
   }
 
-  def checkAffinityAgainstEtmpDetails(etmpRegistrationDetails: EtmpRegistrationDetails,
+  def checkAffinityAgainstEtmpDetails(etmpRegistrationDetails: BusinessPartnerDetails,
                                       businessCustomerDetails: BusinessCustomerDetails)
-                                     (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[EtmpRegistrationDetails]] = {
+                                     (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[BusinessPartnerDetails]] = {
     authorised(User).retrieve(Retrievals.affinityGroup){ affGroup =>
       Future(compareAffinityAgainstRegDetails(affGroup, businessCustomerDetails, etmpRegistrationDetails))
     } recover {
@@ -57,69 +57,41 @@ class EtmpRegimeService @Inject()(etmpConnector: EtmpConnector,
 
   def compareAffinityAgainstRegDetails(affinityGroup: Option[AffinityGroup],
                                        bcd: BusinessCustomerDetails,
-                                       erd: EtmpRegistrationDetails): Option[EtmpRegistrationDetails] = {
+                                       erd: BusinessPartnerDetails): Option[BusinessPartnerDetails] = {
     affinityGroup match {
       case Some(AffinityGroup.Organisation) if matchOrg(bcd, erd)        => Some(erd)
       case _ => None
     }
   }
 
-  private def createEnrolmentVerifiers(safeId: String, utr: Option[String], postcode: Option[String], businessType: String): Verifiers = {
-    val safeIdVerifier = Verifier(VerifierSafeId, safeId)
-
-    val utrType = businessType match {
-      case "SOP" => VerifierSaUtr
-      case _     => VerifierCtUtr
-    }
-
-    (utr, postcode) match {
-      case (Some(uniqueTaxRef), Some(ukClientPostCode)) =>
-        Verifiers(List(
-          Verifier(VerifierPostalCode, ukClientPostCode),
-          Verifier(utrType, uniqueTaxRef),
-          safeIdVerifier)
-        )
-      case (None, Some(nonUkClientPostCode)) =>
-        Verifiers(List(
-          Verifier(VerifierNonUKPostalCode, nonUkClientPostCode),
-          safeIdVerifier)
-        )
-      case (Some(uniqueTaxRef), None) =>
-        Verifiers(List(Verifier(utrType, uniqueTaxRef), safeIdVerifier))
-      case (_, _) =>
-        throw new RuntimeException(s"[NewRegisterUserService][createEnrolmentVerifiers] - postalCode or utr must be supplied")
-    }
-  }
-
-  def upsertEacdEnrolment(safeId: String,
-                          utr: Option[String],
-                          postcode: Option[String],
-                          atedRefNumber: String,
-                          businessType: String)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
+  def upsertAtedKnownFacts(utr: Option[String],
+                           postcode: Option[String],
+                           atedRefNumber: String,
+                           businessType: String)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
     def validateVerifier(value: Option[String]): Option[String] =
       value match {
         case Some(x) if !x.trim().isEmpty => Some(x)
         case _ => None
       }
 
-    val enrolmentVerifiers = createEnrolmentVerifiers(safeId, validateVerifier(utr), validateVerifier(postcode), businessType)
+    val utrType = subscribeService.getUtrType(businessType)
+    val enrolmentVerifiers = subscribeService.createEnrolmentVerifiers(utrType, validateVerifier(utr), validateVerifier(postcode))
     taxEnrolmentsConnector.addKnownFacts(enrolmentVerifiers, atedRefNumber)
   }
 
   def checkEtmpBusinessPartnerExists(safeId: String,
-                                     businessCustomerDetails: BusinessCustomerDetails
-                                    )(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Option[EtmpRegistrationDetails]] = {
+                                     bcd: BusinessCustomerDetails
+                                    )(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Option[BusinessPartnerDetails]] = {
 
       getEtmpBusinessDetails(safeId) flatMap {
         case Some(etmpRegDetails) =>
-          checkAffinityAgainstEtmpDetails(etmpRegDetails, businessCustomerDetails) flatMap {
+          checkAffinityAgainstEtmpDetails(etmpRegDetails, bcd) flatMap {
             case Some(_) =>
-              upsertEacdEnrolment(
-                safeId,
-                businessCustomerDetails.utr,
-                businessCustomerDetails.businessAddress.postcode.map(_.replaceAll("\\s+", "")),
+              upsertAtedKnownFacts(
+                bcd.utr,
+                bcd.businessAddress.postcode.map(_.replaceAll("\\s+", "")),
                 etmpRegDetails.regimeRefNumber,
-                businessCustomerDetails.businessType.getOrElse("")
+                bcd.businessType,
               ) map { response =>
                 response.status match {
                   case NO_CONTENT => Some(etmpRegDetails)
@@ -149,7 +121,7 @@ class EtmpRegimeService @Inject()(etmpConnector: EtmpConnector,
     }
   }
 
-  def matchOrg(bcd: BusinessCustomerDetails, erd: EtmpRegistrationDetails): Boolean = {
+  def matchOrg(bcd: BusinessCustomerDetails, erd: BusinessPartnerDetails): Boolean = {
     Map(
       "businessName" -> erd.organisationName.map(_.toUpperCase).contains(bcd.businessName.toUpperCase),
       "sapNumber"    -> (bcd.sapNumber.toUpperCase == erd.sapNumber.toUpperCase),

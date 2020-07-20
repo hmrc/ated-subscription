@@ -57,7 +57,7 @@ trait GovernmentGatewayAdminConnector extends RawResponseReads with Auditable {
     val timerContext = metrics.startTimer(MetricsEnum.GgAdminAddKnownFacts)
     http.POST[JsValue, HttpResponse](postUrl, jsonData) map {
       response =>
-        val stopContext = timerContext.stop()
+        timerContext.stop()
         auditAddKnownFactsCall(knownFacts, response)
         response.status match {
           case OK =>

@@ -38,11 +38,11 @@ trait AtedSubscriptionController extends BackendController {
     val jsonData = request.body.asJson.get
     subscribeService.subscribe(jsonData) map { returnedResponse =>
       returnedResponse.status match {
-        case OK                   => Ok(returnedResponse.body)
-        case BAD_REQUEST          => BadRequest(returnedResponse.body)
-        case NOT_FOUND            => NotFound(returnedResponse.body)
-        case SERVICE_UNAVAILABLE  => ServiceUnavailable(returnedResponse.body)
-        case _                    => InternalServerError(returnedResponse.body)
+        case OK => Ok(returnedResponse.body)
+        case BAD_REQUEST => BadRequest(returnedResponse.body)
+        case NOT_FOUND => NotFound(returnedResponse.body)
+        case SERVICE_UNAVAILABLE => ServiceUnavailable(returnedResponse.body)
+        case _ => InternalServerError(returnedResponse.body)
       }
     }
   }

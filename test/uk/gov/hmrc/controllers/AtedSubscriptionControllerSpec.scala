@@ -94,31 +94,31 @@ class AtedSubscriptionControllerSpec extends PlaySpec with GuiceOneServerPerSuit
     "subscribe" must {
       "response with OK, when subscription request was successful" in new Setup {
         when(mockSubscribeService.subscribe(ArgumentMatchers.any())(ArgumentMatchers.any()))
-          .thenReturn(Future.successful(HttpResponse(OK, Some(successResponse))))
+          .thenReturn(Future.successful(HttpResponse.apply(OK, successResponse.toString)))
         val result: Future[Result] = controller.subscribe(orgId).apply(FakeRequest().withJsonBody(inputJson))
         status(result) must be(OK)
       }
       "response with BadRequest, when subscription request was containing bad data" in new Setup {
         when(mockSubscribeService.subscribe(ArgumentMatchers.any())(ArgumentMatchers.any()))
-          .thenReturn(Future.successful(HttpResponse(BAD_REQUEST, Some(failureResponse))))
+          .thenReturn(Future.successful(HttpResponse.apply(BAD_REQUEST, failureResponse.toString)))
         val result: Future[Result] = controller.subscribe(orgId).apply(FakeRequest().withJsonBody(inputJson))
         status(result) must be(BAD_REQUEST)
       }
       "response with NotFound, when The remote endpoint has indicated that no data can be found" in new Setup {
         when(mockSubscribeService.subscribe(ArgumentMatchers.any())(ArgumentMatchers.any()))
-          .thenReturn(Future.successful(HttpResponse(NOT_FOUND, Some(failureResponse))))
+          .thenReturn(Future.successful(HttpResponse.apply(NOT_FOUND, failureResponse.toString)))
         val result: Future[Result] = controller.subscribe(orgId).apply(FakeRequest().withJsonBody(inputJson))
         status(result) must be(NOT_FOUND)
       }
       "response with ServiceUnavailable, when ETMP is not responding or has returned a HTTP 500" in new Setup {
         when(mockSubscribeService.subscribe(ArgumentMatchers.any())(ArgumentMatchers.any()))
-          .thenReturn(Future.successful(HttpResponse(SERVICE_UNAVAILABLE, Some(failureResponse))))
+          .thenReturn(Future.successful(HttpResponse.apply(SERVICE_UNAVAILABLE, failureResponse.toString)))
         val result: Future[Result] = controller.subscribe(orgId).apply(FakeRequest().withJsonBody(inputJson))
         status(result) must be(SERVICE_UNAVAILABLE)
       }
       "response with Internal Server error, when any other status is returned" in new Setup {
         when(mockSubscribeService.subscribe(ArgumentMatchers.any())(ArgumentMatchers.any()))
-          .thenReturn(Future.successful(HttpResponse(GATEWAY_TIMEOUT, Some(failureResponse))))
+          .thenReturn(Future.successful(HttpResponse.apply(GATEWAY_TIMEOUT, failureResponse.toString)))
         val result: Future[Result] = controller.subscribe(orgId).apply(FakeRequest().withJsonBody(inputJson))
         status(result) must be(INTERNAL_SERVER_ERROR)
       }

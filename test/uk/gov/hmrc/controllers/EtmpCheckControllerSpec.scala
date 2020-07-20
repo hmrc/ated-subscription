@@ -17,10 +17,10 @@
 package uk.gov.hmrc.controllers
 
 import controllers.EtmpCheckController
-import models.EtmpRegistrationDetails
+import models.BusinessPartnerDetails
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito.when
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import org.scalatestplus.play.PlaySpec
 import play.api.libs.json.Json
@@ -43,11 +43,10 @@ class EtmpCheckControllerSpec extends PlaySpec with MockitoSugar with TestJson w
     "return OK" when {
       "valid business customer details are received" when {
         "there are ETMP registration details" in {
-          val etmpRegistrationDetails = EtmpRegistrationDetails(
+          val etmpRegistrationDetails = BusinessPartnerDetails(
             None,
             "sapNumber",
             "safeId",
-            None,
             "regRef",
             None
           )

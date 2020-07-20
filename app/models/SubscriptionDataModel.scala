@@ -16,66 +16,36 @@
 
 package models
 
-import play.api.libs.json.{JsResult, JsSuccess, JsValue, Json, OFormat, Reads}
+import play.api.libs.json._
 
-case class EtmpRegistrationDetails(
+case class BusinessPartnerDetails(
                                     organisationName: Option[String],
                                     sapNumber: String,
                                     safeId: String,
-                                    isAGroup: Option[Boolean],
                                     regimeRefNumber: String,
-                                    agentReferenceNumber: Option[String],
-                                    firstName: Option[String] = None,
-                                    lastName: Option[String] = None)
+                                    agentReferenceNumber: Option[String])
 
-object EtmpRegistrationDetails {
-  val etmpReader: Reads[EtmpRegistrationDetails] = new Reads[EtmpRegistrationDetails] {
-    def reads(js: JsValue): JsResult[EtmpRegistrationDetails] = {
-      val regimeRefNumber: String = (js \ "regimeIdentifiers").asOpt[List[JsValue]].flatMap { regimeIdentifiers =>
-        regimeIdentifiers.headOption.flatMap { regimeJs =>
-          (regimeJs \ "regimeRefNumber").asOpt[String]
-        }
-      }.getOrElse(throw new RuntimeException("[EtmpRegistrationDetails][etmpReader][reads] No regime ref number"))
+object BusinessPartnerDetails {
+  val reads: Reads[BusinessPartnerDetails] = (js: JsValue) => {
+    val regimeRefNumber: String = (js \ "regimeIdentifiers").asOpt[List[JsValue]].flatMap { regimeIdentifiers =>
+      regimeIdentifiers.headOption.flatMap { regimeJs =>
+        (regimeJs \ "regimeRefNumber").asOpt[String]
+      }
+    }.getOrElse(throw new RuntimeException("[SubscriptionDataModel][BusinessPartnerDetails][reads] No ATED regime ref number"))
 
-      val organisationName = (js \ "organisation" \ "organisationName").asOpt[String]
-      val sapNumber = (js \ "sapNumber").as[String]
-      val safeId = (js \ "safeId").as[String]
-      val isAGroup = (js \ "organisation" \ "isAGroup").asOpt[Boolean]
-      val agentReferenceNumber = (js \ "agentReferenceNumber").asOpt[String]
-      val firstName = (js \"individual" \ "firstName").asOpt[String]
-      val lastName = (js \ "individual" \ "lastName").asOpt[String]
+    val organisationName = (js \ "organisation" \ "organisationName").asOpt[String]
+    val sapNumber = (js \ "sapNumber").as[String]
+    val safeId = (js \ "safeId").as[String]
+    val agentReferenceNumber = (js \ "agentReferenceNumber").asOpt[String]
 
-      JsSuccess(EtmpRegistrationDetails(
-        organisationName,
-        sapNumber,
-        safeId,
-        isAGroup,
-        regimeRefNumber,
-        agentReferenceNumber,
-        firstName,
-        lastName
-      ))
-    }
+    JsSuccess(BusinessPartnerDetails(
+      organisationName,
+      sapNumber,
+      safeId,
+      regimeRefNumber,
+      agentReferenceNumber
+    ))
   }
-}
-
-case class Identification(idNumber: String, issuingInstitution: String, issuingCountryCode: String)
-
-object Identification {
-  implicit val formats: OFormat[Identification] = Json.format[Identification]
-}
-
-case class BusinessCustomerDetails(
-                         businessName: String,
-                         businessType: Option[String],
-                         businessAddress: Address,
-                         sapNumber: String,
-                         safeId: String,
-                         agentReferenceNumber: Option[String],
-                         utr: Option[String] = None)
-
-object BusinessCustomerDetails {
-  implicit val formats: OFormat[BusinessCustomerDetails] = Json.format[BusinessCustomerDetails]
 }
 
 case class Address(
@@ -89,4 +59,17 @@ case class Address(
 
 object Address {
   implicit val formats: OFormat[Address] = Json.format[Address]
+}
+
+case class BusinessCustomerDetails(
+                                    businessName: String,
+                                    businessType: String,
+                                    businessAddress: Address,
+                                    sapNumber: String,
+                                    safeId: String,
+                                    agentReferenceNumber: Option[String],
+                                    utr: Option[String] = None)
+
+object BusinessCustomerDetails {
+  implicit val format: OFormat[BusinessCustomerDetails] = Json.format[BusinessCustomerDetails]
 }
