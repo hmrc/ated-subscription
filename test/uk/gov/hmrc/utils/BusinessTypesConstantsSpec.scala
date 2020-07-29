@@ -20,7 +20,7 @@ import org.scalatestplus.play.PlaySpec
 import utils.BusinessTypeConstants
 import utils.BusinessTypeConstants.{
   businessPartnership, limitedCompany, limitedLiabilityPartnership,
-  limitedPartnership, overseasCompany, unitTrust, unlimitedCompany}
+  limitedPartnership, overseasCompany, unitTrust, unlimitedCompany, soleTrader}
 
 class BusinessTypesConstantsSpec extends PlaySpec {
 
@@ -28,7 +28,7 @@ class BusinessTypesConstantsSpec extends PlaySpec {
     "asked for a list of all sa business types" should {
       "return a valid list" in {
         BusinessTypeConstants.saBusinessTypes must be(
-          List(businessPartnership, limitedPartnership, limitedLiabilityPartnership, overseasCompany)
+          List(businessPartnership, limitedPartnership, limitedLiabilityPartnership, overseasCompany, soleTrader)
         )
       }
     }
@@ -37,7 +37,7 @@ class BusinessTypesConstantsSpec extends PlaySpec {
       "return a valid list" in {
         BusinessTypeConstants.allBusinessTypes must be(
           List(businessPartnership, limitedPartnership, limitedLiabilityPartnership,
-            overseasCompany, limitedCompany, unitTrust, unlimitedCompany)
+            overseasCompany, soleTrader, limitedCompany, unitTrust, unlimitedCompany)
         )
       }
     }

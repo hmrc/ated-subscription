@@ -25,9 +25,10 @@ object BusinessTypeConstants {
   val unitTrust = "Corporate Body"
   val unlimitedCompany = "Corporate Body"
   val overseasCompany = "Non UK-based Company"
+  val soleTrader = "Sole Trader"
 
   def saBusinessTypes: List[String] = {
-    List(businessPartnership, limitedPartnership, limitedLiabilityPartnership, overseasCompany)
+    List(businessPartnership, limitedPartnership, limitedLiabilityPartnership, overseasCompany, soleTrader)
   }
 
   def allBusinessTypes: List[String] = {
