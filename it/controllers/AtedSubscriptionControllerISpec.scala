@@ -30,6 +30,7 @@ class AtedSubscriptionControllerISpec extends IntegrationSpec {
       |    }
       | }],
       | "utr":"12345",
+      | "businessType":"Corporate Body",
       | "isNonUKClientRegisteredByAgent": false,
       | "knownFactPostcode": "NE1 1EN"}
       |

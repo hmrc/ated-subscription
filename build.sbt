@@ -1,18 +1,14 @@
+import TestPhases.{TemplateItTest, TemplateTest}
 import play.routes.compiler.InjectedRoutesGenerator
+import play.sbt.routes.RoutesKeys.routesGenerator
 import sbt.Keys._
 import sbt.{Def, _}
-import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin._
-import uk.gov.hmrc.versioning.SbtGitVersioning.autoImport.majorVersion
-
-  import uk.gov.hmrc._
-  import DefaultBuildSettings._
-  import play.sbt.routes.RoutesKeys.routesGenerator
-  import uk.gov.hmrc.SbtAutoBuildPlugin
-  import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
-  import uk.gov.hmrc.versioning.SbtGitVersioning
-import TestPhases.{TemplateItTest, TemplateTest}
-import uk.gov.hmrc.DefaultBuildSettings.{addTestReportOption, defaultSettings, scalaSettings}
+import uk.gov.hmrc.DefaultBuildSettings.{addTestReportOption, defaultSettings, scalaSettings, _}
+import uk.gov.hmrc.{SbtAutoBuildPlugin, _}
+import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin.publishingSettings
+import uk.gov.hmrc.versioning.SbtGitVersioning
+import uk.gov.hmrc.versioning.SbtGitVersioning.autoImport.majorVersion
 
   val appName: String = "ated-subscription"
 
@@ -52,9 +48,6 @@ lazy val plugins: Seq[Plugins] = Seq(play.sbt.PlayScala, SbtAutoBuildPlugin, Sbt
       unmanagedSourceDirectories in IntegrationTest :=  (baseDirectory in IntegrationTest)(base => Seq(base / "it")).value,
       parallelExecution in IntegrationTest := false
     )
-    .settings(inConfig(TemplateTest)(Defaults.testSettings): _*)
-    .settings(inConfig(TemplateItTest)(Defaults.itSettings): _*)
-    .configs(IntegrationTest)
     .settings(
       resolvers := Seq(
         Resolver.bintrayRepo("hmrc", "releases"),
