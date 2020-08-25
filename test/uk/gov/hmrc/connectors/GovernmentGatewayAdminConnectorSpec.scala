@@ -24,7 +24,7 @@ import metrics.ServiceMetrics
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import org.scalatestplus.play.PlaySpec
 import play.api.libs.json.{JsValue, Json}
@@ -33,7 +33,7 @@ import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.logging.SessionId
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.Audit
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
+
 
 import scala.concurrent.Future
 

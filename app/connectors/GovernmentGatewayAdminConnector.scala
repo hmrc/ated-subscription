@@ -20,14 +20,13 @@ import audit.Auditable
 import javax.inject.Inject
 import metrics.{MetricsEnum, ServiceMetrics}
 import models._
-import play.api.Logger
+import play.api.Logging
 import play.api.http.Status._
 import play.api.libs.json.{JsValue, Json}
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.{Audit, EventTypes}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
 import utils.GovernmentGatewayConstants
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -42,7 +41,7 @@ class DefaultGovernmentGatewayAdminConnector @Inject()(val servicesConfig: Servi
   override val audit: Audit = new Audit("ated-subscription", auditConnector)
 }
 
-trait GovernmentGatewayAdminConnector extends RawResponseReads with Auditable {
+trait GovernmentGatewayAdminConnector extends RawResponseReads with Auditable with Logging {
 
   def serviceURL: String
   def addKnownFactsURI: String
@@ -65,7 +64,7 @@ trait GovernmentGatewayAdminConnector extends RawResponseReads with Auditable {
             response
           case status =>
             metrics.incrementFailedCounter(MetricsEnum.GgAdminAddKnownFacts)
-            Logger.warn(s"[GovernmentGatewayAdminConnector][addKnownFacts] - status: $status")
+            logger.warn(s"[GovernmentGatewayAdminConnector][addKnownFacts] - status: $status")
             doFailedAudit("addKnownFactsFailed", jsonData.toString, response.body)
             response
         }

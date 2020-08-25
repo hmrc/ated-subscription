@@ -22,7 +22,7 @@ import connectors.{EtmpConnector, GovernmentGatewayAdminConnector, TaxEnrolments
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
-import org.scalatest.mockito.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import org.scalatestplus.play.PlaySpec
 import play.api.libs.json.Json
@@ -311,7 +311,7 @@ class SubscribeServiceSpec extends PlaySpec with GuiceOneServerPerSuite with Moc
 
     "respond with BadRequest, when subscription request fails with a Bad request" in new Setup {
       when(mockEtmpConnector.subscribeAted(ArgumentMatchers.any())(ArgumentMatchers.any()))
-        .thenReturn(Future.successful(HttpResponse.apply(BAD_REQUEST, Some(failureResponse))))
+        .thenReturn(Future.successful(HttpResponse(BAD_REQUEST, failureResponse, Map.empty[String, Seq[String]])))
       val result = subscribeServiceGG.subscribe(inputJson)
       val response = await(result)
       response.status must be(BAD_REQUEST)
@@ -322,7 +322,7 @@ class SubscribeServiceSpec extends PlaySpec with GuiceOneServerPerSuite with Moc
       when(mockEtmpConnector.subscribeAted(ArgumentMatchers.any())(ArgumentMatchers.any()))
         .thenReturn(Future.successful(HttpResponse.apply(OK, successResponse.toString)))
       when(mockggAdminConnector.addKnownFacts(ArgumentMatchers.any())(ArgumentMatchers.any()))
-        .thenReturn(Future.successful(HttpResponse.apply(BAD_REQUEST, Some(failureResponse))))
+        .thenReturn(Future.successful(HttpResponse(BAD_REQUEST, failureResponse, Map.empty[String, Seq[String]])))
       val result = subscribeServiceGG.subscribe(inputJson)
       val response = await(result)
       response.status must be(OK)

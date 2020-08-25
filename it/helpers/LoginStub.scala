@@ -22,7 +22,6 @@ trait LoginStub {
       SessionKeys.sessionId -> sessionId,
       SessionKeys.userId -> "/auth/oid/1234567890",
       SessionKeys.authToken -> "token",
-      SessionKeys.authProvider -> "GGW",
       SessionKeys.lastRequestTimestamp -> rollbackTimestamp
     ) ++ additionalData
   }

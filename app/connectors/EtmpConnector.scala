@@ -19,7 +19,7 @@ package connectors
 import audit.Auditable
 import javax.inject.Inject
 import metrics.{MetricsEnum, ServiceMetrics}
-import play.api.Logger
+import play.api.Logging
 import play.api.http.Status._
 import play.api.libs.json.JsValue
 import uk.gov.hmrc.http._
@@ -27,7 +27,6 @@ import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.EventTypes
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -43,7 +42,7 @@ class DefaultEtmpConnector @Inject()(val servicesConfig: ServicesConfig,
   val urlHeaderAuthorization: String = s"Bearer ${servicesConfig.getConfString("etmp-hod.authorization-token", "")}"
 }
 
-trait EtmpConnector extends RawResponseReads with Auditable {
+trait EtmpConnector extends RawResponseReads with Auditable with Logging {
 
   def serviceURL: String
   def baseURI: String
@@ -76,7 +75,7 @@ trait EtmpConnector extends RawResponseReads with Auditable {
             response
           case status =>
             metrics.incrementFailedCounter(MetricsEnum.EtmpSubscribeAted)
-            Logger.warn(s"[ETMPConnector][subscribeAted] - status: $status")
+            logger.warn(s"[ETMPConnector][subscribeAted] - status: $status")
             doFailedAudit("subscribeAtedFailed", data.toString, response.body)(hc)
             response
         }
