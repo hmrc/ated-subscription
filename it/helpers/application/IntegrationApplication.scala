@@ -13,7 +13,8 @@ import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.play.bootstrap.auth.DefaultAuthConnector
 import play.api.inject.bind
 import services.{DefaultSubscribeService, SubscribeService}
-import uk.gov.hmrc.play.bootstrap.http.{DefaultHttpClient, HttpClient}
+import uk.gov.hmrc.play.bootstrap.http.DefaultHttpClient
+import uk.gov.hmrc.http.HttpClient
 
 trait IntegrationApplication extends GuiceOneServerPerSuite with WireMockConfig {
   self: TestSuite =>
@@ -39,7 +40,7 @@ trait IntegrationApplication extends GuiceOneServerPerSuite with WireMockConfig 
       "microservice.services.auth.port"                     -> wireMockPort,
       "microservice.services.enrolment-store-proxy.host"    -> wireMockHost,
       "microservice.services.enrolment-store-proxy.port"    -> wireMockPort,
-      "application.router"                                  -> "testOnlyDoNotUseInAppConf.Routes",
+      "play.http.router"                                    -> "testOnlyDoNotUseInAppConf.Routes",
       "microservice.metrics.graphite.host"                  -> "localhost",
       "microservice.metrics.graphite.port"                  -> 2003,
       "microservice.metrics.graphite.prefix"                -> "play.ated-subscription.",
