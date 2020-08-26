@@ -34,7 +34,7 @@ import uk.gov.hmrc.http._
 import uk.gov.hmrc.http.logging.SessionId
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.Audit
-import uk.gov.hmrc.play.bootstrap.http.HttpClient
+
 
 import scala.concurrent.Future
 
@@ -69,14 +69,14 @@ class TaxEnrolmentsConnectorSpec extends PlaySpec with GuiceOneServerPerSuite wi
 
     "for successful set of known facts, return success" in new Setup {
       implicit val hc = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
-      when(mockHttp.PUT[JsValue, HttpResponse](any(),any(), any())(any(),any(),any(),any())).thenReturn(Future.successful(HttpResponse(NO_CONTENT)))
+      when(mockHttp.PUT[JsValue, HttpResponse](any(),any(), any())(any(),any(),any(),any())).thenReturn(Future.successful(HttpResponse(NO_CONTENT, "")))
       val result: Future[HttpResponse] = connector.addKnownFacts(createVerifiers, "ATED-123")
       await(result).status must be(NO_CONTENT)
     }
 
     "for unsuccessful set of known facts, return subscription response" in new Setup {
       implicit val hc = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
-      when(mockHttp.PUT[JsValue, HttpResponse](any(), any(), any())(any(), any(), any(), any())).thenReturn(Future.successful(HttpResponse(BAD_REQUEST)))
+      when(mockHttp.PUT[JsValue, HttpResponse](any(), any(), any())(any(), any(), any(), any())).thenReturn(Future.successful(HttpResponse(BAD_REQUEST, "")))
       val result: Future[HttpResponse] = connector.addKnownFacts(createVerifiers, "ATED-123")
       await(result).status must be(BAD_REQUEST)
     }

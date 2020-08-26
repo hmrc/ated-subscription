@@ -4,7 +4,6 @@ import java.util.UUID
 
 import play.api.Application
 import play.api.mvc.{DefaultCookieHeaderEncoding, DefaultSessionCookieBaker}
-import uk.gov.hmrc.http.SessionKeys
 
 trait LoginStub {
 
@@ -17,13 +16,13 @@ trait LoginStub {
   private def cookieData(additionalData: Map[String, String], timeStampRollback: Long): Map[String, String] = {
     val timeStamp = new java.util.Date().getTime
     val rollbackTimestamp = (timeStamp - timeStampRollback).toString
+    val lastRequestTimestamp  = "ts"
 
     Map(
-      SessionKeys.sessionId -> sessionId,
-      SessionKeys.userId -> "/auth/oid/1234567890",
-      SessionKeys.authToken -> "token",
-      SessionKeys.authProvider -> "GGW",
-      SessionKeys.lastRequestTimestamp -> rollbackTimestamp
+      "sessionId" -> sessionId,
+      "userId" -> "/auth/oid/1234567890",
+      "authToken" -> "token",
+      lastRequestTimestamp -> rollbackTimestamp
     ) ++ additionalData
   }
 

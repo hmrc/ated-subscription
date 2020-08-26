@@ -24,16 +24,17 @@ import services.{DefaultSubscribeService, SubscribeService}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.play.bootstrap.auth.DefaultAuthConnector
 import uk.gov.hmrc.play.bootstrap.http.{DefaultHttpClient, HttpClient}
+import play.api.inject.{bind => playBind}
 
 class ServiceBindings extends Module {
   override def bindings(environment: Environment, configuration: Configuration): Seq[Binding[_]] =
     Seq(
-      bind(classOf[AuthConnector]).to(classOf[DefaultAuthConnector]),
-      bind(classOf[EtmpConnector]).to(classOf[DefaultEtmpConnector]),
-      bind(classOf[GovernmentGatewayAdminConnector]).to(classOf[DefaultGovernmentGatewayAdminConnector]),
-      bind(classOf[TaxEnrolmentsConnector]).to(classOf[DefaultTaxEnrolmentsConnector]),
-      bind(classOf[HttpClient]).to(classOf[DefaultHttpClient]),
-      bind(classOf[SubscribeService]).to(classOf[DefaultSubscribeService]),
-      bind(classOf[ServiceMetrics]).to(classOf[DefaultServiceMetrics])
+      playBind(classOf[AuthConnector]).to(classOf[DefaultAuthConnector]),
+      playBind(classOf[EtmpConnector]).to(classOf[DefaultEtmpConnector]),
+      playBind(classOf[GovernmentGatewayAdminConnector]).to(classOf[DefaultGovernmentGatewayAdminConnector]),
+      playBind(classOf[TaxEnrolmentsConnector]).to(classOf[DefaultTaxEnrolmentsConnector]),
+      playBind(classOf[HttpClient]).to(classOf[DefaultHttpClient]),
+      playBind(classOf[SubscribeService]).to(classOf[DefaultSubscribeService]),
+      playBind(classOf[ServiceMetrics]).to(classOf[DefaultServiceMetrics])
     )
 }

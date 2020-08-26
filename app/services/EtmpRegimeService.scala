@@ -19,7 +19,7 @@ package services
 import connectors.{EtmpConnector, TaxEnrolmentsConnector}
 import javax.inject.Inject
 import models.{BusinessCustomerDetails, BusinessPartnerDetails}
-import play.api.Logger
+import play.api.Logging
 import play.api.http.Status._
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector, AuthorisedFunctions, User}
@@ -31,14 +31,14 @@ import scala.util.{Failure, Success, Try}
 class EtmpRegimeService @Inject()(etmpConnector: EtmpConnector,
                                   val subscribeService: SubscribeService,
                                   val taxEnrolmentsConnector: TaxEnrolmentsConnector,
-                                  val authConnector: AuthConnector) extends AuthorisedFunctions {
+                                  val authConnector: AuthConnector) extends AuthorisedFunctions with Logging {
 
   def getEtmpBusinessDetails(safeId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[BusinessPartnerDetails]] = {
     etmpConnector.atedRegime(safeId).map { response =>
       Try(BusinessPartnerDetails.reads.reads(response.json)) match {
         case Success(value)   => value.asOpt
         case Failure(e)       =>
-          Logger.info(s"[EtmpRegimeService][getEtmpBusinessDetails] Could not read ETMP response - $e")
+          logger.info(s"[EtmpRegimeService][getEtmpBusinessDetails] Could not read ETMP response - $e")
           None
       }
     }
@@ -96,7 +96,7 @@ class EtmpRegimeService @Inject()(etmpConnector: EtmpConnector,
                 response.status match {
                   case NO_CONTENT => Some(etmpRegDetails)
                   case status =>
-                    Logger.warn(s"[EtmpRegimeService][checkEtmpBusinessPartnerExists] " +
+                    logger.warn(s"[EtmpRegimeService][checkEtmpBusinessPartnerExists] " +
                       s"Failed to upsert to EACD - status: $status")
                     None
                 }
@@ -108,7 +108,7 @@ class EtmpRegimeService @Inject()(etmpConnector: EtmpConnector,
           Future.successful(None)
       } recover {
         case e: Exception =>
-          Logger.warn(s"[EtmpRegimeService][checkEtmpBusinessPartnerExists] Failed to check ETMP api :${e.getMessage}")
+          logger.warn(s"[EtmpRegimeService][checkEtmpBusinessPartnerExists] Failed to check ETMP api :${e.getMessage}")
           None
       }
   }
@@ -130,7 +130,7 @@ class EtmpRegimeService @Inject()(etmpConnector: EtmpConnector,
     ).partition{case (_, v) => v} match {
       case (_, failures) if failures.isEmpty => true
       case (_, failures) =>
-        Logger.warn(s"[matchOrg] Could not match following details for organisation: $failures")
+        logger.warn(s"[matchOrg] Could not match following details for organisation: $failures")
         false
     }
   }
