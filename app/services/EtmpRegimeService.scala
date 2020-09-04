@@ -89,7 +89,7 @@ class EtmpRegimeService @Inject()(etmpConnector: EtmpConnector,
             case Some(_) =>
               upsertAtedKnownFacts(
                 bcd.utr,
-                bcd.businessAddress.postcode.map(_.replaceAll("\\s+", "")),
+                bcd.businessAddress.postcode,
                 etmpRegDetails.regimeRefNumber,
                 bcd.businessType,
               ) map { response =>
