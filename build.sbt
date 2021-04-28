@@ -12,7 +12,7 @@ import uk.gov.hmrc.versioning.SbtGitVersioning.autoImport.majorVersion
 val appName: String = "ated-subscription"
 
 lazy val appDependencies : Seq[ModuleID] = AppDependencies()
-lazy val plugins: Seq[Plugins] = Seq(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin, SbtArtifactory)
+lazy val plugins: Seq[Plugins] = Seq(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin)
   lazy val playSettings: Seq[Setting[_]] = Seq.empty
 
   lazy val scoverageSettings: Seq[Def.Setting[_ >: String with Double with Boolean]] = {
@@ -55,11 +55,8 @@ lazy val microservice = Project(appName, file("."))
     )
   )
   .settings(
-    resolvers := Seq(
-      Resolver.bintrayRepo("hmrc", "releases"),
-      Resolver.typesafeRepo("releases"),
-      Resolver.jcenterRepo
-    )
+    resolvers += Resolver.typesafeRepo("releases"),
+    resolvers += Resolver.jcenterRepo
   )
   .enablePlugins(SbtDistributablesPlugin, SbtAutoBuildPlugin, SbtGitVersioning)
   .disablePlugins(JUnitXmlReportPlugin)

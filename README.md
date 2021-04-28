@@ -3,7 +3,7 @@ ated-subscription
 
 Annual Tax for Enveloped Dwellings Subscription microservice
 
-[![Build Status](https://travis-ci.org/hmrc/ated-subscription.svg)](https://travis-ci.org/hmrc/ated-subscription) [ ![Download](https://api.bintray.com/packages/hmrc/releases/ated-subscription/images/download.svg) ](https://bintray.com/hmrc/releases/ated-subscription/_latestVersion)
+[![Build Status](https://travis-ci.org/hmrc/ated-subscription.svg)](https://travis-ci.org/hmrc/ated-subscription) 
 
 This service provides the ability for UK-based or Non-UK based ATED clients (or agents on behalf of clients) to subscribe to ATED service on ETMP. They must be registered to ETMP as per the ROSM pattern.
 

@@ -7,10 +7,10 @@ object AppDependencies {
 
   val compile: Seq[ModuleID] = Seq(
     ws,
-    "uk.gov.hmrc" %% "bootstrap-backend-play-27" % "2.24.0"
+    "uk.gov.hmrc" %% "bootstrap-backend-play-27" % "3.4.0"
   )
 
-  def apply() = compile ++ Test()
+  def apply(): Seq[sbt.ModuleID] = compile ++ Test()
 
   trait TestDependencies {
     lazy val scope: String = "it,test"
@@ -18,7 +18,7 @@ object AppDependencies {
   }
 
   object Test {
-    def apply() = new TestDependencies {
+    def apply(): Seq[sbt.ModuleID] = new TestDependencies {
       override lazy val test = Seq(
         "org.scalatestplus.play" %% "scalatestplus-play" % "4.0.3" % scope,
         "org.pegdown" % "pegdown" % "1.6.0" % scope,
