@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.connectors
 
-import java.util.UUID
-
 import builders.TestAudit
 import connectors.TaxEnrolmentsConnector
 import metrics.ServiceMetrics
@@ -31,11 +29,10 @@ import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.libs.json.JsValue
 import play.api.test.Helpers._
 import uk.gov.hmrc.http._
-import uk.gov.hmrc.http.logging.SessionId
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.Audit
 
-
+import java.util.UUID
 import scala.concurrent.Future
 
 class TaxEnrolmentsConnectorSpec extends PlaySpec with GuiceOneServerPerSuite with MockitoSugar with BeforeAndAfterEach {

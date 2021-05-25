@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.services
 
-import java.util.UUID
-
 import connectors.{EtmpConnector, TaxEnrolmentsConnector}
 import models.{Address, BusinessCustomerDetails, BusinessPartnerDetails}
 import org.mockito.ArgumentMatchers
@@ -29,13 +27,13 @@ import play.api.libs.json.JsObject
 import play.api.test.Helpers._
 import services.{EtmpRegimeService, SubscribeService}
 import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector}
-import uk.gov.hmrc.http.logging.SessionId
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, SessionId}
 import uk.gov.hmrc.utils.TestJson
 import utils.BusinessTypeConstants
 
-import scala.concurrent.Future
+import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson with BeforeAndAfterEach {
 

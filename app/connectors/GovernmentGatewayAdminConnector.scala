@@ -54,7 +54,7 @@ trait GovernmentGatewayAdminConnector extends RawResponseReads with Auditable wi
     val baseUrl = s"""$serviceURL/government-gateway-admin/service"""
     val postUrl = s"""$baseUrl/${GovernmentGatewayConstants.AtedServiceName}/$addKnownFactsURI"""
     val timerContext = metrics.startTimer(MetricsEnum.GgAdminAddKnownFacts)
-    http.POST[JsValue, HttpResponse](postUrl, jsonData) map {
+    http.POST[JsValue, HttpResponse](postUrl, jsonData, Seq.empty) map {
       response =>
         timerContext.stop()
         auditAddKnownFactsCall(knownFacts, response)

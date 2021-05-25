@@ -17,8 +17,10 @@
 package services
 
 import connectors.{EtmpConnector, GovernmentGatewayAdminConnector, TaxEnrolmentsConnector}
+
 import javax.inject.Inject
 import models.{KnownFact, KnownFactsForService, Verifier, Verifiers}
+import play.api.Logging
 import play.api.http.Status._
 import play.api.libs.json.{JsObject, JsValue}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
@@ -36,7 +38,7 @@ class DefaultSubscribeService @Inject()(val etmpConnector: EtmpConnector,
   val isEmacFeatureToggle: Boolean = servicesConfig.getBoolean("emacsFeatureToggle")
 }
 
-trait SubscribeService {
+trait SubscribeService extends Logging {
 
   def etmpConnector: EtmpConnector
   def ggAdminConnector: GovernmentGatewayAdminConnector

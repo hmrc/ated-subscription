@@ -23,7 +23,6 @@ import play.api.Logging
 import play.api.http.Status._
 import play.api.libs.json.JsValue
 import uk.gov.hmrc.http._
-import uk.gov.hmrc.http.logging.Authorization
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.EventTypes
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
@@ -53,22 +52,28 @@ trait EtmpConnector extends RawResponseReads with Auditable with Logging {
   def http: HttpClient
   val regimeURI = "/registration/details"
 
+  def createHeaders: Seq[(String, String)] = {
+    Seq(
+      "Environment" -> urlHeaderEnvironment,
+      "Authorization" -> urlHeaderAuthorization
+    )
+  }
+
   def atedRegime(safeId: String)(implicit headerCarrier: HeaderCarrier): Future[HttpResponse] = {
-    implicit val hc: HeaderCarrier = createHeaderCarrier(headerCarrier)
     http.GET[HttpResponse](
-      s"""$serviceURL$regimeURI?safeid=$safeId&regime=ATED"""
-    )(implicitly, hc, implicitly)
+      s"""$serviceURL$regimeURI?safeid=$safeId&regime=ATED""", Seq.empty, createHeaders
+    )
   }
 
   def subscribeAted(data: JsValue)(implicit headerCarrier: HeaderCarrier): Future[HttpResponse] = {
-    implicit val hc: HeaderCarrier = createHeaderCarrier(headerCarrier)
     val timerContext = metrics.startTimer(MetricsEnum.EtmpSubscribeAted)
+
     http.POST[JsValue, HttpResponse](
-      s"$serviceURL/$baseURI/$subscribeUri", data
-    )(implicitly, implicitly, hc, implicitly) map {
+      s"$serviceURL/$baseURI/$subscribeUri", data, createHeaders
+    ) map {
       response =>
         timerContext.stop()
-        auditSubscribe(data, response)(hc)
+        auditSubscribe(data, response)
         response.status match {
           case OK =>
             metrics.incrementSuccessCounter(MetricsEnum.EtmpSubscribeAted)
@@ -76,7 +81,7 @@ trait EtmpConnector extends RawResponseReads with Auditable with Logging {
           case status =>
             metrics.incrementFailedCounter(MetricsEnum.EtmpSubscribeAted)
             logger.warn(s"[ETMPConnector][subscribeAted] - status: $status")
-            doFailedAudit("subscribeAtedFailed", data.toString, response.body)(hc)
+            doFailedAudit("subscribeAtedFailed", data.toString, response.body)
             response
         }
     }
@@ -116,11 +121,6 @@ trait EtmpConnector extends RawResponseReads with Auditable with Logging {
         "submittedLine4" -> getAddressPiece((data \\ "addressLine4").headOption),
         "submittedPostcode" -> getAddressPiece((data \\ "postalCode").headOption),
         "submittedCountry" -> (data \\ "countryCode").head.as[String]))
-  }
-
-  def createHeaderCarrier(hc: HeaderCarrier): HeaderCarrier = {
-    hc.withExtraHeaders("Environment" -> urlHeaderEnvironment).copy(
-      authorization = Some(Authorization(urlHeaderAuthorization)))
   }
 
 }
