@@ -70,7 +70,7 @@ class AtedSubscriptionControllerISpec extends IntegrationSpec {
 
           val result: WSResponse = await(hitApplicationEndpoint(s"/$userType/$name/subscribe")
             .post(inputJson))
-
+          
           result.status mustBe 200
         }
       }

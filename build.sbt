@@ -12,7 +12,7 @@ import uk.gov.hmrc.versioning.SbtGitVersioning.autoImport.majorVersion
 val appName: String = "ated-subscription"
 
 lazy val appDependencies : Seq[ModuleID] = AppDependencies()
-lazy val plugins: Seq[Plugins] = Seq(play.sbt.PlayScala, SbtAutoBuildPlugin, SbtGitVersioning, SbtDistributablesPlugin)
+lazy val plugins: Seq[Plugins] = Seq(play.sbt.PlayScala, SbtDistributablesPlugin)
   lazy val playSettings: Seq[Setting[_]] = Seq.empty
 
   lazy val scoverageSettings: Seq[Def.Setting[_ >: String with Double with Boolean]] = {

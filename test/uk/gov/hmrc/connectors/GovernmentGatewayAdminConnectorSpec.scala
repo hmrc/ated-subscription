@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.connectors
 
-import java.util.UUID
-
 import builders.{GGBuilder, TestAudit}
 import connectors.GovernmentGatewayAdminConnector
 import metrics.ServiceMetrics
@@ -25,16 +23,15 @@ import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import org.scalatestplus.play.PlaySpec
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.{JsValue, Json}
 import play.api.test.Helpers._
 import uk.gov.hmrc.http._
-import uk.gov.hmrc.http.logging.SessionId
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.Audit
 
-
+import java.util.UUID
 import scala.concurrent.Future
 
 class GovernmentGatewayAdminConnectorSpec extends PlaySpec with GuiceOneAppPerSuite with MockitoSugar with BeforeAndAfterEach {

@@ -21,16 +21,15 @@ import java.util.UUID
 import builders.TestAudit
 import connectors.EtmpConnector
 import metrics.ServiceMetrics
-import org.mockito.ArgumentMatchers
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
-import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import org.scalatestplus.play.PlaySpec
+import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.libs.json.{JsValue, Json}
 import play.api.test.Helpers._
 import uk.gov.hmrc.http._
-import uk.gov.hmrc.http.logging.SessionId
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.Audit
 import uk.gov.hmrc.utils.TestJson
@@ -126,8 +125,8 @@ class EtmpConnectorSpec extends PlaySpec with GuiceOneServerPerSuite with Mockit
     "for successful subscription, return subscription response" in new Setup {
       implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
       when(mockWSHttp.POST[JsValue, HttpResponse]
-        (ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(),
-        ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any()))
+        (any(), any(), any())(any(),
+        any(), any(), any()))
         .thenReturn(Future.successful(HttpResponse(OK, successfulSubscribeJson.toString)))
       val result: Future[HttpResponse] = connector.subscribeAted(inputJson)
       await(result).json must be(successfulSubscribeJson)
@@ -136,8 +135,8 @@ class EtmpConnectorSpec extends PlaySpec with GuiceOneServerPerSuite with Mockit
     "for successful subscription, return subscription response and audit international address" in new Setup {
       implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
       when(mockWSHttp.POST[JsValue, HttpResponse]
-        (ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(),
-        ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any()))
+        (any(), any(), any())(any(),
+        any(), any(), any()))
         .thenReturn(Future.successful(HttpResponse(OK, successfulSubscribeJson.toString)))
       val result: Future[HttpResponse] = connector.subscribeAted(inputJsonNoPostcode)
       await(result).json must be(successfulSubscribeJson)
@@ -146,8 +145,8 @@ class EtmpConnectorSpec extends PlaySpec with GuiceOneServerPerSuite with Mockit
     "for unsuccessful subscription, return subscription response" in new Setup {
       implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
       when(mockWSHttp.POST[JsValue, HttpResponse]
-        (ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(),
-        ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any()))
+        (any(), any(), any())(any(),
+        any(), any(), any()))
         .thenReturn(Future.successful(HttpResponse(BAD_REQUEST, unsuccessfulSubscribeJson.toString)))
       val result: Future[HttpResponse] = connector.subscribeAted(inputJson)
       await(result).json must be(unsuccessfulSubscribeJson)
@@ -157,7 +156,7 @@ class EtmpConnectorSpec extends PlaySpec with GuiceOneServerPerSuite with Mockit
   "atedRegime" should {
     "return an HttpResponse" in new Setup {
       implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
-      when(mockWSHttp.GET[HttpResponse](ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any()))
+      when(mockWSHttp.GET[HttpResponse](any(), any(), any())(any(), any(), any()))
         .thenReturn(Future.successful(HttpResponse(OK, etmpWithRegimeOrgResponse.toString)))
       val result: Future[HttpResponse] = connector.atedRegime("SAFEID123")
 
