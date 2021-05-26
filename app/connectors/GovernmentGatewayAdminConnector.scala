@@ -44,7 +44,7 @@ class DefaultGovernmentGatewayAdminConnector @Inject()(val servicesConfig: Servi
 trait GovernmentGatewayAdminConnector extends RawResponseReads with Auditable with Logging {
 
   def serviceURL: String
-  def addKnownFactsURI: String
+  val addKnownFactsURI: String
   val http: HttpClient
   def metrics: ServiceMetrics
 

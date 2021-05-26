@@ -16,10 +16,11 @@
 
 package uk.gov.hmrc.connectors
 
+import java.util.UUID
+
 import builders.TestAudit
 import connectors.EtmpConnector
 import metrics.ServiceMetrics
-import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
@@ -33,7 +34,6 @@ import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.Audit
 import uk.gov.hmrc.utils.TestJson
 
-import java.util.UUID
 import scala.concurrent.Future
 
 class EtmpConnectorSpec extends PlaySpec with GuiceOneServerPerSuite with MockitoSugar with BeforeAndAfterEach with TestJson {
