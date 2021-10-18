@@ -19,7 +19,7 @@ lazy val plugins: Seq[Plugins] = Seq(play.sbt.PlayScala, SbtDistributablesPlugin
     import scoverage.ScoverageKeys
     Seq(
       ScoverageKeys.coverageExcludedPackages := "<empty>;Reverse.*;app.Routes.*;prod.*;uk.gov.hmrc.*;testOnlyDoNotUseInAppConf.*;forms.*;config.*;",
-      ScoverageKeys.coverageMinimum := 95,
+      ScoverageKeys.coverageMinimumStmtTotal := 95,
       ScoverageKeys.coverageFailOnMinimum := true,
       ScoverageKeys.coverageHighlighting := true
     )
@@ -58,7 +58,7 @@ lazy val microservice = Project(appName, file("."))
     resolvers += Resolver.typesafeRepo("releases"),
     resolvers += Resolver.jcenterRepo
   )
-  .enablePlugins(SbtDistributablesPlugin, SbtAutoBuildPlugin, SbtGitVersioning)
+  .enablePlugins(SbtDistributablesPlugin)
   .disablePlugins(JUnitXmlReportPlugin)
 
 
