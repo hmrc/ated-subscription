@@ -7,7 +7,7 @@ object AppDependencies {
 
   val compile: Seq[ModuleID] = Seq(
     ws,
-    "uk.gov.hmrc" %% "bootstrap-backend-play-28" % "5.16.0"
+    "uk.gov.hmrc" %% "bootstrap-backend-play-28" % "5.25.0"
   )
 
   def apply(): Seq[sbt.ModuleID] = compile ++ Test()
