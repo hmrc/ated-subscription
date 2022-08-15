@@ -111,8 +111,7 @@ class EtmpCheckControllerISpec extends IntegrationSpec with LoginStub {
           )
         )
 
-        val result: WSResponse = await(hitApplicationEndpoint("/regime-etmp-check")
-          .post(inputJson))
+        val result: WSResponse = await(hitApplicationEndpoint("/regime-etmp-check").withMethod("POST").post(inputJson))
 
         result.status mustBe OK
       }
