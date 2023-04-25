@@ -38,6 +38,7 @@ class DefaultTaxEnrolmentsConnector @Inject()(val servicesConfig: ServicesConfig
                                               val metrics: ServiceMetrics,
                                               val http: HttpClient) extends TaxEnrolmentsConnector {
   val serviceUrl: String = servicesConfig.baseUrl("tax-enrolments")
+  val enrolmentStoreProxyUrl: String = servicesConfig.baseUrl("enrolment-store-proxy")
   val emacBaseUrl = s"$serviceUrl/tax-enrolments/enrolments"
   override val audit: Audit = new Audit("ated-subscription", auditConnector)
 }
@@ -45,6 +46,7 @@ class DefaultTaxEnrolmentsConnector @Inject()(val servicesConfig: ServicesConfig
 trait TaxEnrolmentsConnector extends RawResponseReads with Auditable with Logging {
 
   def serviceUrl: String
+  def enrolmentStoreProxyUrl: String
   def emacBaseUrl: String
   def metrics: ServiceMetrics
   def http: HttpClient
@@ -85,6 +87,28 @@ trait TaxEnrolmentsConnector extends RawResponseReads with Auditable with Loggin
         "responseStatus" -> s"${response.status}",
         "responseBody" -> s"${response.body}",
         "status" -> s"$status"))
+  }
+
+  def getATEDUsers(atedRef: String)(implicit hc: HeaderCarrier): Future[Either[Int, AtedUsers]] = {
+
+    val url = s"$enrolmentStoreProxyUrl/enrolment-store-proxy/enrolment-store/enrolments/HMRC-ATED-ORG~ATEDRefNumber~$atedRef/users"
+    http.GET[HttpResponse](url, Seq.empty).map {
+      response =>
+        response.status match {
+          case OK =>
+            logger.info(s"""[EnrolmentStoreConnector][getATEDUsers]: ES0 Was successful for $atedRef""")
+            response.json.validate[AtedUsers].fold(_ => Left(INTERNAL_SERVER_ERROR), users => Right(users))
+          case NO_CONTENT =>
+            logger.info(s"""[EnrolmentStoreConnector][getATEDUsers]: ES0 Returnsed nothing for $atedRef""")
+            Right(AtedUsers(Nil, Nil))
+          case BAD_REQUEST =>
+            logger.warn(s"""[EnrolmentStoreConnector][getATEDUsers]: Received bad request for ES0 call ${response.status} : ${response.body}""")
+            Left(BAD_REQUEST)
+          case _ =>
+            logger.error(s"[EnrolmentsStoreConnector][getATEDUsers]: ES0 returned: ${response.status} with body ${response.body}")
+            Left(response.status)
+        }
+    }
   }
 }
 

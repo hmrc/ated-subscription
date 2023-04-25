@@ -3,3 +3,5 @@
 POST                    /org/:org/subscribe                  controllers.DefaultAtedSubscriptionController.subscribe(org: String)
 POST                    /agent/:ac/subscribe                 controllers.AgentAtedSubscriptionController.subscribe(ac: String)
 POST                    /regime-etmp-check                   controllers.EtmpCheckController.checkEtmp()
+
+GET                     /ated/status-info/users/:safeID      controllers.StatusInfoController.enrolledUsers(safeID: String)
