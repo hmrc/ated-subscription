@@ -131,7 +131,6 @@ class EtmpRegimeService @Inject()(etmpConnector: EtmpConnector,
     ).partition{case (_, v) => v} match {
       case (_, failures) if failures.isEmpty => true
       case (_, failures) => {
-        println(s"GGGGGGGGGGHHHHHHHHHHHHUUUUTTTTRRR  bcd.agentReferenceNumber=${bcd.agentReferenceNumber} and erd.agentReferenceNumber = ${erd.agentReferenceNumber}")
         logger.warn(s"[matchOrg] Could not match following details for organisation: $failures")
         false
       }

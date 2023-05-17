@@ -96,16 +96,16 @@ trait TaxEnrolmentsConnector extends RawResponseReads with Auditable with Loggin
       response =>
         response.status match {
           case OK =>
-            logger.info(s"""[EnrolmentStoreConnector][getATEDUsers]: ES0 Was successful for $atedRef""")
+            //logger.info(s"""[EnrolmentStoreConnector][getATEDUsers]: ES0 Was successful for $atedRef""")
             response.json.validate[AtedUsers].fold(_ => Left(INTERNAL_SERVER_ERROR), users => Right(users))
           case NO_CONTENT =>
-            logger.info(s"""[EnrolmentStoreConnector][getATEDUsers]: ES0 Returnsed nothing for $atedRef""")
+            //logger.info(s"""[EnrolmentStoreConnector][getATEDUsers]: ES0 Returnsed nothing for $atedRef""")
             Right(AtedUsers(Nil, Nil))
           case BAD_REQUEST =>
-            logger.warn(s"""[EnrolmentStoreConnector][getATEDUsers]: Received bad request for ES0 call ${response.status} : ${response.body}""")
+            //logger.warn(s"""[EnrolmentStoreConnector][getATEDUsers]: Received bad request for ES0 call ${response.status} : ${response.body}""")
             Left(BAD_REQUEST)
           case _ =>
-            logger.error(s"[EnrolmentsStoreConnector][getATEDUsers]: ES0 returned: ${response.status} with body ${response.body}")
+            //logger.error(s"[EnrolmentsStoreConnector][getATEDUsers]: ES0 returned: ${response.status} with body ${response.body}")
             Left(response.status)
         }
     }

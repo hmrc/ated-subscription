@@ -39,11 +39,11 @@ class StatusInfoController @Inject()(val auditConnector: AuditConnector,
         enrolmentService.atedUsers(details.regimeRefNumber).map {
           case Right(users) => Ok(Json.toJson(users))
           case Left(err) =>
-            logger.warn(s"[ATED][enrolledUsers for safeId] - returned ${Status(err)} $err when retrieving awrs users")
+            //logger.warn(s"[ATED][enrolledUsers for safeId] - returned ${Status(err)} $err when retrieving awrs users")
             Status(err)(s"""Error when checking enrolment store for ${details.regimeRefNumber}""")
         }
       case None =>
-        logger.warn(s"""[ATED][enrolledUsers for safeID] - No business details found for safeID $safeID""")
+        //logger.warn(s"""[ATED][enrolledUsers for safeID] - No business details found for safeID $safeID""")
         Future.successful(NotFound(s"""ATED enrolled Business Details not found for $safeID"""))
     }
   }
