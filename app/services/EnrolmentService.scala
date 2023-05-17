@@ -25,7 +25,7 @@ import scala.concurrent.Future
 
 class EnrolmentService @Inject()(enrolmentStoreConnector: TaxEnrolmentsConnector) {
 
-  def atedUsers(awrsRefNo: String)(implicit headerCarrier: HeaderCarrier): Future[Either[Int, AtedUsers]] =
-    enrolmentStoreConnector.getATEDUsers(awrsRefNo)
+  def atedUsers(atedRefNo: String)(implicit headerCarrier: HeaderCarrier): Future[Either[Int, AtedUsers]] =
+    enrolmentStoreConnector.getATEDUsers(atedRefNo)
 
 }

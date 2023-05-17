@@ -36,8 +36,7 @@ class EtmpRegimeService @Inject()(etmpConnector: EtmpConnector,
   def getEtmpBusinessDetails(safeId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[BusinessPartnerDetails]] = {
     etmpConnector.atedRegime(safeId).map { response =>
       Try(BusinessPartnerDetails.reads.reads(response.json)) match {
-        case Success(value)   => {
-          value.asOpt}
+        case Success(value)   => value.asOpt
         case Failure(e)       =>
           logger.info(s"[EtmpRegimeService][getEtmpBusinessDetails] Could not read ETMP response - $e")
           None
@@ -130,10 +129,9 @@ class EtmpRegimeService @Inject()(etmpConnector: EtmpConnector,
       "agentRef"     -> compareOptionalStrings(bcd.agentReferenceNumber, erd.agentReferenceNumber)
     ).partition{case (_, v) => v} match {
       case (_, failures) if failures.isEmpty => true
-      case (_, failures) => {
+      case (_, failures) =>
         logger.warn(s"[matchOrg] Could not match following details for organisation: $failures")
         false
-      }
     }
   }
 
