@@ -26,15 +26,11 @@ import scala.concurrent.ExecutionContext
 
 @Singleton
 class DefaultAtedSubscriptionController @Inject()(val subscribeService: SubscribeService,
-                                                  val cc: ControllerComponents) extends BackendController(cc) with AtedSubscriptionController {
-  override implicit val ec: ExecutionContext = cc.executionContext
-}
+                                                  val cc: ControllerComponents)(implicit val ec: ExecutionContext) extends BackendController(cc) with AtedSubscriptionController
 
 @Singleton
 class AgentAtedSubscriptionController @Inject()(val subscribeService: SubscribeService,
-                                                val cc: ControllerComponents) extends BackendController(cc) with AtedSubscriptionController {
-  override implicit val ec: ExecutionContext = cc.executionContext
-}
+                                                val cc: ControllerComponents)(implicit val ec: ExecutionContext) extends BackendController(cc) with AtedSubscriptionController
 
 trait AtedSubscriptionController extends BackendController {
   implicit val ec: ExecutionContext

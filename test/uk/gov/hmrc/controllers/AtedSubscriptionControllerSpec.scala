@@ -43,8 +43,7 @@ class AtedSubscriptionControllerSpec extends PlaySpec with GuiceOneServerPerSuit
 
     class TestAtedSubscriptionController extends BackendController(cc) with AtedSubscriptionController {
       override val subscribeService: SubscribeService = mockSubscribeService
-      override implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
-
+      implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
     }
 
     val controller = new TestAtedSubscriptionController()
