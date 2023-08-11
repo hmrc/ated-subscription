@@ -31,7 +31,7 @@ import services.SubscribeService
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class AtedSubscriptionControllerSpec extends PlaySpec with GuiceOneServerPerSuite with MockitoSugar with BeforeAndAfterEach {
 
@@ -43,6 +43,8 @@ class AtedSubscriptionControllerSpec extends PlaySpec with GuiceOneServerPerSuit
 
     class TestAtedSubscriptionController extends BackendController(cc) with AtedSubscriptionController {
       override val subscribeService: SubscribeService = mockSubscribeService
+      override implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
+
     }
 
     val controller = new TestAtedSubscriptionController()
@@ -93,31 +95,31 @@ class AtedSubscriptionControllerSpec extends PlaySpec with GuiceOneServerPerSuit
   "AtedSubscriptionController" must {
     "subscribe" must {
       "response with OK, when subscription request was successful" in new Setup {
-        when(mockSubscribeService.subscribe(ArgumentMatchers.any())(ArgumentMatchers.any()))
+        when(mockSubscribeService.subscribe(ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
           .thenReturn(Future.successful(HttpResponse.apply(OK, successResponse.toString)))
         val result: Future[Result] = controller.subscribe(orgId).apply(FakeRequest().withJsonBody(inputJson))
         status(result) must be(OK)
       }
       "response with BadRequest, when subscription request was containing bad data" in new Setup {
-        when(mockSubscribeService.subscribe(ArgumentMatchers.any())(ArgumentMatchers.any()))
+        when(mockSubscribeService.subscribe(ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
           .thenReturn(Future.successful(HttpResponse.apply(BAD_REQUEST, failureResponse.toString)))
         val result: Future[Result] = controller.subscribe(orgId).apply(FakeRequest().withJsonBody(inputJson))
         status(result) must be(BAD_REQUEST)
       }
       "response with NotFound, when The remote endpoint has indicated that no data can be found" in new Setup {
-        when(mockSubscribeService.subscribe(ArgumentMatchers.any())(ArgumentMatchers.any()))
+        when(mockSubscribeService.subscribe(ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
           .thenReturn(Future.successful(HttpResponse.apply(NOT_FOUND, failureResponse.toString)))
         val result: Future[Result] = controller.subscribe(orgId).apply(FakeRequest().withJsonBody(inputJson))
         status(result) must be(NOT_FOUND)
       }
       "response with ServiceUnavailable, when ETMP is not responding or has returned a HTTP 500" in new Setup {
-        when(mockSubscribeService.subscribe(ArgumentMatchers.any())(ArgumentMatchers.any()))
+        when(mockSubscribeService.subscribe(ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
           .thenReturn(Future.successful(HttpResponse.apply(SERVICE_UNAVAILABLE, failureResponse.toString)))
         val result: Future[Result] = controller.subscribe(orgId).apply(FakeRequest().withJsonBody(inputJson))
         status(result) must be(SERVICE_UNAVAILABLE)
       }
       "response with Internal Server error, when any other status is returned" in new Setup {
-        when(mockSubscribeService.subscribe(ArgumentMatchers.any())(ArgumentMatchers.any()))
+        when(mockSubscribeService.subscribe(ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
           .thenReturn(Future.successful(HttpResponse.apply(GATEWAY_TIMEOUT, failureResponse.toString)))
         val result: Future[Result] = controller.subscribe(orgId).apply(FakeRequest().withJsonBody(inputJson))
         status(result) must be(INTERNAL_SERVER_ERROR)

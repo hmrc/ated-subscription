@@ -29,13 +29,14 @@ import services.SubscribeService
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, SessionId}
 
 import java.util.UUID
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class SubscribeServiceSpec extends PlaySpec with GuiceOneServerPerSuite with MockitoSugar with BeforeAndAfterEach {
 
   val mockEtmpConnector: EtmpConnector = mock[EtmpConnector]
   val mockggAdminConnector: GovernmentGatewayAdminConnector = mock[GovernmentGatewayAdminConnector]
   val mockTaxEnrolmentConnector: TaxEnrolmentsConnector = mock[TaxEnrolmentsConnector]
+  implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
 
   trait Setup {
     class TestSubscribeServiceSpecGG extends SubscribeService {
@@ -197,9 +198,9 @@ class SubscribeServiceSpec extends PlaySpec with GuiceOneServerPerSuite with Moc
 
     "subscribe when we are passed valid json adding known facts to GG" in new Setup {
 
-      when(mockEtmpConnector.subscribeAted(ArgumentMatchers.any())(ArgumentMatchers.any()))
+      when(mockEtmpConnector.subscribeAted(ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(HttpResponse.apply(OK, successResponse.toString())))
-      when(mockggAdminConnector.addKnownFacts(ArgumentMatchers.any())(ArgumentMatchers.any()))
+      when(mockggAdminConnector.addKnownFacts(ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(HttpResponse.apply(OK, "")))
       val result: Future[HttpResponse] = subscribeServiceGG.subscribe(inputJson)
       val response: HttpResponse = await(result)
@@ -209,9 +210,9 @@ class SubscribeServiceSpec extends PlaySpec with GuiceOneServerPerSuite with Moc
 
     "subscribe when we are passed valid json doing upsert enrolment in EMAC" in new Setup {
 
-      when(mockEtmpConnector.subscribeAted(ArgumentMatchers.any())(ArgumentMatchers.any()))
+      when(mockEtmpConnector.subscribeAted(ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(HttpResponse.apply(OK, successResponse.toString)))
-      when(mockTaxEnrolmentConnector.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any()))
+      when(mockTaxEnrolmentConnector.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(HttpResponse.apply(OK, "")))
       val result: Future[HttpResponse] = subscribeServiceEMAC.subscribe(inputJson)
       val response: HttpResponse = await(result)
@@ -221,9 +222,9 @@ class SubscribeServiceSpec extends PlaySpec with GuiceOneServerPerSuite with Moc
 
     "subscribe when we are passed valid json doing upsert enrolment in EMAC with NO UTR and Non-UK Postcode" in new Setup {
 
-      when(mockEtmpConnector.subscribeAted(ArgumentMatchers.any())(ArgumentMatchers.any()))
+      when(mockEtmpConnector.subscribeAted(ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(HttpResponse.apply(OK, successResponse.toString)))
-      when(mockTaxEnrolmentConnector.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any()))
+      when(mockTaxEnrolmentConnector.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(HttpResponse.apply(OK, "")))
       val result: Future[HttpResponse] = subscribeServiceEMAC.subscribe(inputJsonNoUtrNoUKPostcode)
       val response: HttpResponse = await(result)
@@ -233,7 +234,7 @@ class SubscribeServiceSpec extends PlaySpec with GuiceOneServerPerSuite with Moc
 
     "throw an exception when valid json with no utr and postcode is passed for enrolment in EMAC" in new Setup {
 
-      when(mockEtmpConnector.subscribeAted(ArgumentMatchers.any())(ArgumentMatchers.any()))
+      when(mockEtmpConnector.subscribeAted(ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(HttpResponse.apply(OK, successResponse.toString)))
       val result: Future[HttpResponse] = subscribeServiceEMAC.subscribe(inputJsonNoUtrNoPostCode)
       val thrown: RuntimeException = the[RuntimeException] thrownBy await(result)
@@ -242,7 +243,7 @@ class SubscribeServiceSpec extends PlaySpec with GuiceOneServerPerSuite with Moc
 
     "respond with OK when only ctutr when valid json with no postcode is passed for enrolment in EMAC" in new Setup {
 
-      when(mockEtmpConnector.subscribeAted(ArgumentMatchers.any())(ArgumentMatchers.any()))
+      when(mockEtmpConnector.subscribeAted(ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(HttpResponse.apply(OK, successResponse.toString)))
       val result: Future[HttpResponse] = subscribeServiceEMAC.subscribe(inputJsonNoPostcode)
       val response: HttpResponse = await(result)
@@ -278,7 +279,7 @@ class SubscribeServiceSpec extends PlaySpec with GuiceOneServerPerSuite with Moc
         """.stripMargin
       )
 
-      when(mockEtmpConnector.subscribeAted(ArgumentMatchers.any())(ArgumentMatchers.any()))
+      when(mockEtmpConnector.subscribeAted(ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(HttpResponse.apply(OK, successResponse.toString)))
       val result: Future[HttpResponse] = subscribeServiceGG.subscribe(inputJsonNoKnownFacts)
       val response: HttpResponse = await(result)
@@ -288,7 +289,7 @@ class SubscribeServiceSpec extends PlaySpec with GuiceOneServerPerSuite with Moc
 
     "throw exception when we are passed valid json with no utr and postcode" in new Setup {
 
-      when(mockEtmpConnector.subscribeAted(ArgumentMatchers.any())(ArgumentMatchers.any()))
+      when(mockEtmpConnector.subscribeAted(ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(HttpResponse.apply(OK, successResponse.toString)))
       val result: Future[HttpResponse] = subscribeServiceGG.subscribe(inputJsonNoUtrNoPostCode)
       val thrown: RuntimeException = the[RuntimeException] thrownBy await(result)
@@ -298,9 +299,9 @@ class SubscribeServiceSpec extends PlaySpec with GuiceOneServerPerSuite with Moc
     "throw exception when we are passed valid json with no ated ref" in new Setup {
 
       val successResponseNoAted: JsValue = Json.parse( """{"processingDate": "2001-12-17T09:30:47Z", "formBundleNumber": "123456789012345"}""")
-      when(mockEtmpConnector.subscribeAted(ArgumentMatchers.any())(ArgumentMatchers.any()))
+      when(mockEtmpConnector.subscribeAted(ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(HttpResponse.apply(OK, successResponseNoAted.toString())))
-      when(mockggAdminConnector.addKnownFacts(ArgumentMatchers.any())(ArgumentMatchers.any()))
+      when(mockggAdminConnector.addKnownFacts(ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(HttpResponse.apply(OK, "")))
       val result: Future[HttpResponse] = subscribeServiceGG.subscribe(inputJson)
       val thrown: RuntimeException = the[RuntimeException] thrownBy await(result)
@@ -308,7 +309,7 @@ class SubscribeServiceSpec extends PlaySpec with GuiceOneServerPerSuite with Moc
     }
 
     "respond with BadRequest, when subscription request fails with a Bad request" in new Setup {
-      when(mockEtmpConnector.subscribeAted(ArgumentMatchers.any())(ArgumentMatchers.any()))
+      when(mockEtmpConnector.subscribeAted(ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(HttpResponse(BAD_REQUEST, failureResponse, Map.empty[String, Seq[String]])))
       val result: Future[HttpResponse] = subscribeServiceGG.subscribe(inputJson)
       val response: HttpResponse = await(result)
@@ -317,9 +318,9 @@ class SubscribeServiceSpec extends PlaySpec with GuiceOneServerPerSuite with Moc
     }
 
     "respond with an OK, when subscription works but gg admin request fails with a Bad request" in new Setup {
-      when(mockEtmpConnector.subscribeAted(ArgumentMatchers.any())(ArgumentMatchers.any()))
+      when(mockEtmpConnector.subscribeAted(ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(HttpResponse.apply(OK, successResponse.toString)))
-      when(mockggAdminConnector.addKnownFacts(ArgumentMatchers.any())(ArgumentMatchers.any()))
+      when(mockggAdminConnector.addKnownFacts(ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(HttpResponse(BAD_REQUEST, failureResponse, Map.empty[String, Seq[String]])))
       val result: Future[HttpResponse] = subscribeServiceGG.subscribe(inputJson)
       val response: HttpResponse = await(result)

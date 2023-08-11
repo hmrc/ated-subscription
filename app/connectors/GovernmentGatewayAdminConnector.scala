@@ -17,6 +17,7 @@
 package connectors
 
 import audit.Auditable
+
 import javax.inject.Inject
 import metrics.{MetricsEnum, ServiceMetrics}
 import models._
@@ -29,8 +30,7 @@ import uk.gov.hmrc.play.audit.model.{Audit, EventTypes}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import utils.GovernmentGatewayConstants
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class DefaultGovernmentGatewayAdminConnector @Inject()(val servicesConfig: ServicesConfig,
                                                        val auditConnector: AuditConnector,
@@ -48,7 +48,7 @@ trait GovernmentGatewayAdminConnector extends RawResponseReads with Auditable wi
   val http: HttpClient
   def metrics: ServiceMetrics
 
-  def addKnownFacts(knownFacts: KnownFactsForService)(implicit headerCarrier: HeaderCarrier): Future[HttpResponse] = {
+  def addKnownFacts(knownFacts: KnownFactsForService)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
 
     val jsonData = Json.toJson(knownFacts)
     val baseUrl = s"""$serviceURL/government-gateway-admin/service"""
@@ -71,7 +71,7 @@ trait GovernmentGatewayAdminConnector extends RawResponseReads with Auditable wi
     }
   }
 
-  private def auditAddKnownFactsCall(input: KnownFactsForService, response: HttpResponse)(implicit hc: HeaderCarrier): Unit = {
+  private def auditAddKnownFactsCall(input: KnownFactsForService, response: HttpResponse)(implicit hc: HeaderCarrier, ec: ExecutionContext): Unit = {
     val eventType = response.status match {
       case OK => EventTypes.Succeeded
       case _ => EventTypes.Failed

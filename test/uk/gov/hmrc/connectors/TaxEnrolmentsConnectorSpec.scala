@@ -35,6 +35,7 @@ import uk.gov.hmrc.play.audit.model.Audit
 
 import java.util.UUID
 import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class TaxEnrolmentsConnectorSpec extends PlaySpec with GuiceOneServerPerSuite with MockitoSugar with BeforeAndAfterEach {
 

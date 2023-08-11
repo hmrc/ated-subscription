@@ -33,6 +33,7 @@ import uk.gov.hmrc.play.audit.model.Audit
 
 import java.util.UUID
 import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class GovernmentGatewayAdminConnectorSpec extends PlaySpec with GuiceOneAppPerSuite with MockitoSugar with BeforeAndAfterEach {
 

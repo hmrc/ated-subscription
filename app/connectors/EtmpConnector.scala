@@ -17,6 +17,7 @@
 package connectors
 
 import audit.Auditable
+
 import javax.inject.Inject
 import metrics.{MetricsEnum, ServiceMetrics}
 import play.api.Logging
@@ -27,8 +28,7 @@ import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.EventTypes
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class DefaultEtmpConnector @Inject()(val servicesConfig: ServicesConfig,
                                      val auditConnector: AuditConnector,
@@ -59,13 +59,13 @@ trait EtmpConnector extends RawResponseReads with Auditable with Logging {
     )
   }
 
-  def atedRegime(safeId: String)(implicit headerCarrier: HeaderCarrier): Future[HttpResponse] = {
+  def atedRegime(safeId: String)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     http.GET[HttpResponse](
       s"""$serviceURL$regimeURI?safeid=$safeId&regime=ATED""", Seq.empty, createHeaders
     )
   }
 
-  def subscribeAted(data: JsValue)(implicit headerCarrier: HeaderCarrier): Future[HttpResponse] = {
+  def subscribeAted(data: JsValue)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val timerContext = metrics.startTimer(MetricsEnum.EtmpSubscribeAted)
 
     http.POST[JsValue, HttpResponse](
@@ -87,7 +87,7 @@ trait EtmpConnector extends RawResponseReads with Auditable with Logging {
     }
   }
 
-  private def auditSubscribe(data: JsValue, response: HttpResponse)(implicit hc: HeaderCarrier): Unit = {
+  private def auditSubscribe(data: JsValue, response: HttpResponse)(implicit hc: HeaderCarrier, ec: ExecutionContext): Unit = {
     val eventType = response.status match {
       case OK => EventTypes.Succeeded
       case _ => EventTypes.Failed

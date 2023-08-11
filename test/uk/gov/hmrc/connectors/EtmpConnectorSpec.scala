@@ -35,6 +35,7 @@ import uk.gov.hmrc.play.audit.model.Audit
 import uk.gov.hmrc.utils.TestJson
 
 import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class EtmpConnectorSpec extends PlaySpec with GuiceOneServerPerSuite with MockitoSugar with BeforeAndAfterEach with TestJson {
 
