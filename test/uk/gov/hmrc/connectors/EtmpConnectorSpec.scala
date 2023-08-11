@@ -59,7 +59,7 @@ class EtmpConnectorSpec extends PlaySpec with GuiceOneServerPerSuite with Mockit
     val connector: TestEtmpConnector = new TestEtmpConnector
   }
 
-  override def beforeEach = {
+  override def beforeEach(): Unit = {
     reset(mockWSHttp)
   }
 

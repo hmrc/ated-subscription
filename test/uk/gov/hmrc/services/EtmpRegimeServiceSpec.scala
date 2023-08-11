@@ -48,10 +48,10 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
   val businessName: String = "ACME Trading"
   val agentRef: String = "AARN1234567"
 
-  val businessAddress = Address(
+  val businessAddress: Address = Address(
     "1 LS House", "LS Way", Some("LS"), Some("Line 4"), Some("Postcode"), "GB")
 
-  val businessCustomerDetails = BusinessCustomerDetails(
+  val businessCustomerDetails: BusinessCustomerDetails = BusinessCustomerDetails(
     businessName = businessName,
     BusinessTypeConstants.unitTrust,
     businessAddress = businessAddress,
@@ -70,7 +70,9 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
   )
 
   override def beforeEach(): Unit = {
-    reset(mockEtmpConnector, mockTaxEnrolments, mockAuthConnector)
+    reset(mockEtmpConnector)
+    reset(mockTaxEnrolments)
+    reset(mockAuthConnector)
     super.beforeEach()
   }
 
@@ -205,7 +207,7 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
 
   def makeBusinessCustomerDetails(businessName: String, sapNumber: String, safeId: String,
                                   isAGroup: Boolean, agentRefNumber: Option[String],
-                                  firstName: Option[String], lastName: Option[String]) =
+                                  firstName: Option[String], lastName: Option[String]): BusinessCustomerDetails =
     BusinessCustomerDetails(
       businessName,
       BusinessTypeConstants.limitedPartnership,
@@ -217,7 +219,7 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
 
   def makeEtmpDetails(businessName: String, sapNumber: String, safeId: String, isAGroup: Boolean,
                       regimeRefNumber: String, agentRefNumber: Option[String],
-                      firstName: Option[String], lastName: Option[String]) =
+                      firstName: Option[String], lastName: Option[String]): BusinessPartnerDetails =
     BusinessPartnerDetails(
       Some(businessName),
       sapNumber,

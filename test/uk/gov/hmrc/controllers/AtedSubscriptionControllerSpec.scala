@@ -48,7 +48,7 @@ class AtedSubscriptionControllerSpec extends PlaySpec with GuiceOneServerPerSuit
     val controller = new TestAtedSubscriptionController()
   }
 
-  override def beforeEach: Unit = {
+  override def beforeEach(): Unit = {
     reset(mockSubscribeService)
   }
 

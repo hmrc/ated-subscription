@@ -54,7 +54,7 @@ class GovernmentGatewayAdminConnectorSpec extends PlaySpec with GuiceOneAppPerSu
     val connector = new TestGGAdminConnector()
   }
 
-  override def beforeEach: Unit = {
+  override def beforeEach(): Unit = {
     reset(mockWSHttp)
   }
 
@@ -78,7 +78,7 @@ class GovernmentGatewayAdminConnectorSpec extends PlaySpec with GuiceOneAppPerSu
         ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())).
         thenReturn(Future.successful(HttpResponse(OK, succesfulSubscribeJson.toString)))
 
-      val result = connector.addKnownFacts(GGBuilder.createKnownFacts("ATED", "ATED-123"))
+      val result: Future[HttpResponse] = connector.addKnownFacts(GGBuilder.createKnownFacts("ATED", "ATED-123"))
       await(result).status must be(OK)
     }
 
@@ -87,7 +87,7 @@ class GovernmentGatewayAdminConnectorSpec extends PlaySpec with GuiceOneAppPerSu
       when(mockWSHttp.POST[JsValue, HttpResponse](ArgumentMatchers.any(), ArgumentMatchers.any(),
         ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any())).
         thenReturn(Future.successful(HttpResponse(BAD_REQUEST, unsuccessfulSubscribeJson.toString)))
-      val result = connector.addKnownFacts(GGBuilder.createKnownFacts("ATED", "ATED-123"))
+      val result: Future[HttpResponse] = connector.addKnownFacts(GGBuilder.createKnownFacts("ATED", "ATED-123"))
       await(result).json must be(unsuccessfulSubscribeJson)
     }
 
