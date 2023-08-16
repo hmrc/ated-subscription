@@ -1,19 +1,16 @@
 import play.routes.compiler.InjectedRoutesGenerator
 import play.sbt.routes.RoutesKeys.routesGenerator
 import sbt.Keys._
-import sbt.{CrossVersion, Def, compilerPlugin, _}
-import uk.gov.hmrc.DefaultBuildSettings.{addTestReportOption, defaultSettings, scalaSettings, _}
-import uk.gov.hmrc.SbtAutoBuildPlugin
+import sbt.{Def, _}
+import uk.gov.hmrc.DefaultBuildSettings._
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
-import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin.publishingSettings
-import uk.gov.hmrc.versioning.SbtGitVersioning
 import uk.gov.hmrc.versioning.SbtGitVersioning.autoImport.majorVersion
 
 val appName: String = "ated-subscription"
 
 lazy val appDependencies : Seq[ModuleID] = AppDependencies()
 lazy val plugins: Seq[Plugins] = Seq(play.sbt.PlayScala, SbtDistributablesPlugin)
-  lazy val playSettings: Seq[Setting[_]] = Seq.empty
+lazy val playSettings: Seq[Setting[_]] = Seq.empty
 
   lazy val scoverageSettings: Seq[Def.Setting[_ >: String with Double with Boolean]] = {
     import scoverage.ScoverageKeys
@@ -25,34 +22,26 @@ lazy val plugins: Seq[Plugins] = Seq(play.sbt.PlayScala, SbtDistributablesPlugin
     )
   }
 
-val silencerVersion = "1.7.1"
-
 lazy val microservice = Project(appName, file("."))
   .enablePlugins(plugins: _*)
   .settings(playSettings ++ scoverageSettings: _*)
   .settings( majorVersion := 2 )
   .settings(scalaSettings: _*)
-  .settings(publishingSettings: _*)
   .configs(IntegrationTest)
   .settings(defaultSettings(): _*)
   .settings(
     addTestReportOption(IntegrationTest, "int-test-reports"),
     inConfig(IntegrationTest)(Defaults.itSettings),
-    scalaVersion := "2.12.11",
-    targetJvm := "jvm-1.8",
+    scalaVersion := "2.13.8",
     libraryDependencies ++= appDependencies,
-    parallelExecution in Test := false,
-    fork in Test := false,
+    Test / parallelExecution := false,
+    Test / fork := false,
     retrieveManaged := true,
     routesGenerator := InjectedRoutesGenerator,
-    Keys.fork                  in IntegrationTest :=  false,
-    unmanagedSourceDirectories in IntegrationTest :=  (baseDirectory in IntegrationTest)(base => Seq(base / "it")).value,
-    parallelExecution in IntegrationTest := false,
-    scalacOptions += "-P:silencer:pathFilters=views;routes",
-    libraryDependencies ++= Seq(
-      compilerPlugin("com.github.ghik" % "silencer-plugin" % silencerVersion cross CrossVersion.full),
-      "com.github.ghik" % "silencer-lib" % silencerVersion % Provided cross CrossVersion.full
-    )
+    IntegrationTest / Keys.fork :=  false,
+    IntegrationTest / unmanagedSourceDirectories :=  (IntegrationTest / baseDirectory)(base => Seq(base / "it")).value,
+    IntegrationTest / parallelExecution := false,
+    scalacOptions += "-Wconf:src=routes/.*:s"
   )
   .settings(
     resolvers += Resolver.typesafeRepo("releases"),
@@ -60,5 +49,3 @@ lazy val microservice = Project(appName, file("."))
   )
   .enablePlugins(SbtDistributablesPlugin)
   .disablePlugins(JUnitXmlReportPlugin)
-
-

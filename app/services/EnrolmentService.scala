@@ -21,11 +21,11 @@ import models.AtedUsers
 import uk.gov.hmrc.http.HeaderCarrier
 
 import javax.inject.Inject
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class EnrolmentService @Inject()(enrolmentStoreConnector: TaxEnrolmentsConnector) {
 
-  def atedUsers(atedRefNo: String)(implicit headerCarrier: HeaderCarrier): Future[Either[Int, AtedUsers]] =
+  def atedUsers(atedRefNo: String)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Either[Int, AtedUsers]] =
     enrolmentStoreConnector.getATEDUsers(atedRefNo)
 
 }

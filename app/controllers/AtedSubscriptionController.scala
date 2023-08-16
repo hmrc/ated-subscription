@@ -21,17 +21,19 @@ import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import services.SubscribeService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
+
 
 @Singleton
 class DefaultAtedSubscriptionController @Inject()(val subscribeService: SubscribeService,
-                                                  val cc: ControllerComponents) extends BackendController(cc) with AtedSubscriptionController
+                                                  val cc: ControllerComponents)(implicit val ec: ExecutionContext) extends BackendController(cc) with AtedSubscriptionController
 
 @Singleton
 class AgentAtedSubscriptionController @Inject()(val subscribeService: SubscribeService,
-                                                val cc: ControllerComponents) extends BackendController(cc) with AtedSubscriptionController
+                                                val cc: ControllerComponents)(implicit val ec: ExecutionContext) extends BackendController(cc) with AtedSubscriptionController
 
 trait AtedSubscriptionController extends BackendController {
+  implicit val ec: ExecutionContext
   def subscribeService: SubscribeService
 
   def subscribe(orgId: String): Action[AnyContent] = Action.async { implicit request =>

@@ -23,7 +23,8 @@ import play.api.{Configuration, Environment}
 import services.{DefaultSubscribeService, SubscribeService}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.play.bootstrap.auth.DefaultAuthConnector
-import uk.gov.hmrc.play.bootstrap.http.{DefaultHttpClient, HttpClient}
+import uk.gov.hmrc.http.HttpClient
+import uk.gov.hmrc.play.bootstrap.http.DefaultHttpClient
 import play.api.inject.{bind => playBind}
 
 class ServiceBindings extends Module {

@@ -19,15 +19,12 @@ package uk.gov.hmrc.controllers
 import controllers.StatusInfoController
 import models.{AtedUsers, BusinessPartnerDetails}
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
-
-
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
-
 import play.api.libs.json.Json
 import play.api.mvc.ControllerComponents
 import play.api.test.FakeRequest
@@ -35,8 +32,7 @@ import play.api.test.Helpers._
 import services.{EnrolmentService, EtmpRegimeService}
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 
-import scala.concurrent.Future
-
+import scala.concurrent.{ExecutionContext, Future}
 
 class StatusInfoControllerSpec extends PlaySpec with GuiceOneServerPerSuite with MockitoSugar with BeforeAndAfterEach {
 
@@ -44,6 +40,7 @@ class StatusInfoControllerSpec extends PlaySpec with GuiceOneServerPerSuite with
   val mockRegimeService: EtmpRegimeService = mock[EtmpRegimeService]
   val mockAuditConnector: AuditConnector = mock[AuditConnector]
   val cc: ControllerComponents = app.injector.instanceOf[ControllerComponents]
+  implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
 
   object StatusInfoControllerSpec extends StatusInfoController(mockAuditConnector, mockRegimeService, mockEnrolementService, cc, "ated")
 
@@ -55,7 +52,7 @@ class StatusInfoControllerSpec extends PlaySpec with GuiceOneServerPerSuite with
         "regime-ref-number-123", Some("agent-ref-number-123"))
       val atedUsers = AtedUsers(List("ated-user", "principal-user-two"), List("delegated-user-one", "delegated-user-two"))
       when(mockRegimeService.getEtmpBusinessDetails(ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Future.successful(Some(testBusinessDetails)))
-      when(mockEnrolementService.atedUsers(ArgumentMatchers.any())(ArgumentMatchers.any())).thenReturn(Future.successful(Right(atedUsers)))
+      when(mockEnrolementService.atedUsers(ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Future.successful(Right(atedUsers)))
 
       val result = StatusInfoControllerSpec.enrolledUsers(testSafeId).apply(FakeRequest())
       status(result) shouldBe OK

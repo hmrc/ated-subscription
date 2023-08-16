@@ -28,8 +28,7 @@ import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import utils.BusinessTypeConstants._
 import utils.GovernmentGatewayConstants._
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class DefaultSubscribeService @Inject()(val etmpConnector: EtmpConnector,
                                         val ggAdminConnector: GovernmentGatewayAdminConnector,
@@ -46,7 +45,7 @@ trait SubscribeService extends Logging {
 
   val isEmacFeatureToggle: Boolean
 
-  def subscribe(data: JsValue)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
+  def subscribe(data: JsValue)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     for {
       submitResponse <- etmpConnector.subscribeAted(stripJsonForEtmp(data))
       _ <- addKnownFacts(submitResponse, data)
@@ -55,7 +54,7 @@ trait SubscribeService extends Logging {
     }
   }
 
-  private def addKnownFacts(response: HttpResponse, data: JsValue)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
+  private def addKnownFacts(response: HttpResponse, data: JsValue)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val isNonUKClientRegisteredByAgent = (data \ "isNonUKClientRegisteredByAgent").asOpt[Boolean].getOrElse(false)
     (isNonUKClientRegisteredByAgent, response.status) match {
       case (false, OK) =>

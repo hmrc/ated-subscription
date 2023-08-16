@@ -67,7 +67,7 @@ class EtmpRegimeService @Inject()(etmpConnector: EtmpConnector,
   def upsertAtedKnownFacts(utr: Option[String],
                            postcode: Option[String],
                            atedRefNumber: String,
-                           businessType: String)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
+                           businessType: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     def validateVerifier(value: Option[String]): Option[String] =
       value match {
         case Some(x) if !x.trim().isEmpty => Some(x)

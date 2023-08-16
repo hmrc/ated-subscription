@@ -32,12 +32,12 @@ import uk.gov.hmrc.utils.TestJson
 import utils.BusinessTypeConstants
 
 import java.util.UUID
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson with BeforeAndAfterEach {
 
   implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
+  implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
 
   val mockEtmpConnector: EtmpConnector = mock[EtmpConnector]
   val mockAuthConnector: AuthConnector = mock[AuthConnector]
@@ -48,10 +48,10 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
   val businessName: String = "ACME Trading"
   val agentRef: String = "AARN1234567"
 
-  val businessAddress = Address(
+  val businessAddress: Address = Address(
     "1 LS House", "LS Way", Some("LS"), Some("Line 4"), Some("Postcode"), "GB")
 
-  val businessCustomerDetails = BusinessCustomerDetails(
+  val businessCustomerDetails: BusinessCustomerDetails = BusinessCustomerDetails(
     businessName = businessName,
     BusinessTypeConstants.unitTrust,
     businessAddress = businessAddress,
@@ -70,7 +70,9 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
   )
 
   override def beforeEach(): Unit = {
-    reset(mockEtmpConnector, mockTaxEnrolments, mockAuthConnector)
+    reset(mockEtmpConnector)
+    reset(mockTaxEnrolments)
+    reset(mockAuthConnector)
     super.beforeEach()
   }
 
@@ -79,7 +81,7 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
   "getEtmpBusinessDetails" should {
 
     "successfully return a regimeRefNumber" in {
-      when(mockEtmpConnector.atedRegime(ArgumentMatchers.eq(safeId))(ArgumentMatchers.any()))
+      when(mockEtmpConnector.atedRegime(ArgumentMatchers.eq(safeId))(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(HttpResponse.apply(OK, etmpWithRegimeOrgResponse.toString)))
 
       val result = TestEtmpRegimeService.getEtmpBusinessDetails(safeId)
@@ -90,7 +92,7 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
     "successfully return an empty ref when no regime ref number is present" in {
       val json: JsObject = etmpWithRegimeOrgResponse.as[JsObject].-("regimeIdentifiers")
 
-      when(mockEtmpConnector.atedRegime(ArgumentMatchers.eq(safeId))(ArgumentMatchers.any()))
+      when(mockEtmpConnector.atedRegime(ArgumentMatchers.eq(safeId))(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(HttpResponse.apply(OK, json.toString())))
 
       val result = TestEtmpRegimeService.getEtmpBusinessDetails(safeId)
@@ -105,9 +107,9 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
       when(mockAuthConnector.authorise[Option[AffinityGroup]](ArgumentMatchers.any(),
         ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(Some(AffinityGroup.Organisation)))
-      when(mockEtmpConnector.atedRegime(ArgumentMatchers.eq(safeId))(ArgumentMatchers.any()))
+      when(mockEtmpConnector.atedRegime(ArgumentMatchers.eq(safeId))(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(HttpResponse.apply(OK, etmpWithRegimeOrgResponse.toString)))
-      when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any()))
+      when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(HttpResponse.apply(NO_CONTENT, "")))
 
       val result = TestEtmpRegimeService.checkEtmpBusinessPartnerExists(safeId, businessCustomerDetails)
@@ -117,7 +119,7 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
 
 
     "fail to return an ETMP registration when there are no regimeIdentifiers" in {
-      when(mockEtmpConnector.atedRegime(ArgumentMatchers.eq(safeId))(ArgumentMatchers.any()))
+      when(mockEtmpConnector.atedRegime(ArgumentMatchers.eq(safeId))(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(HttpResponse.apply(OK, "")))
 
       val result = TestEtmpRegimeService.checkEtmpBusinessPartnerExists(safeId, businessCustomerDetails)
@@ -126,7 +128,7 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
     }
 
     "fail to return if the ETMP call throws an exception" in {
-      when(mockEtmpConnector.atedRegime(ArgumentMatchers.eq(safeId))(ArgumentMatchers.any()))
+      when(mockEtmpConnector.atedRegime(ArgumentMatchers.eq(safeId))(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.failed(new RuntimeException("test")))
 
       val result = TestEtmpRegimeService.checkEtmpBusinessPartnerExists(safeId, businessCustomerDetails)
@@ -138,9 +140,9 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
       when(mockAuthConnector.authorise[Option[AffinityGroup]](ArgumentMatchers.any(),
         ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(Some(AffinityGroup.Organisation)))
-      when(mockEtmpConnector.atedRegime(ArgumentMatchers.eq(safeId))(ArgumentMatchers.any()))
+      when(mockEtmpConnector.atedRegime(ArgumentMatchers.eq(safeId))(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(HttpResponse.apply(OK, etmpWithRegimeOrgResponse.toString)))
-      when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any()))
+      when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.failed(new RuntimeException("failure to return registration details")))
 
       val result = TestEtmpRegimeService.checkEtmpBusinessPartnerExists(safeId, businessCustomerDetails)
@@ -205,7 +207,7 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
 
   def makeBusinessCustomerDetails(businessName: String, sapNumber: String, safeId: String,
                                   isAGroup: Boolean, agentRefNumber: Option[String],
-                                  firstName: Option[String], lastName: Option[String]) =
+                                  firstName: Option[String], lastName: Option[String]): BusinessCustomerDetails =
     BusinessCustomerDetails(
       businessName,
       BusinessTypeConstants.limitedPartnership,
@@ -217,7 +219,7 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
 
   def makeEtmpDetails(businessName: String, sapNumber: String, safeId: String, isAGroup: Boolean,
                       regimeRefNumber: String, agentRefNumber: Option[String],
-                      firstName: Option[String], lastName: Option[String]) =
+                      firstName: Option[String], lastName: Option[String]): BusinessPartnerDetails =
     BusinessPartnerDetails(
       Some(businessName),
       sapNumber,
@@ -300,7 +302,7 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
     "upsert an eacd enrolment" when {
 
       "provided details to enrol for a CT business" in {
-        when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any()))
+        when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
           .thenReturn(Future.successful(HttpResponse.apply(OK, "")))
 
         val result = TestEtmpRegimeService.upsertAtedKnownFacts(Some("UTR"), Some("postcode"), "atedRefNumber", "LTD")
@@ -309,7 +311,7 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
       }
 
       "provided details to enrol for a SOP business" in {
-        when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any()))
+        when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
           .thenReturn(Future.successful(HttpResponse.apply(OK, "")))
 
         val result = TestEtmpRegimeService.upsertAtedKnownFacts(Some("UTR"), Some("postcode"), "atedRefNumber", "SOP")
@@ -318,7 +320,7 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
       }
 
       "provided only a tax ref" in {
-        when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any()))
+        when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
           .thenReturn(Future.successful(HttpResponse.apply(OK, "")))
 
         val result = TestEtmpRegimeService.upsertAtedKnownFacts(Some("UTR"), None, "atedRefNumber", "LTD")
@@ -330,7 +332,7 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
     "failed to upsert eacd enrolment" when {
 
       "provided details to enrolment for LTD" in {
-        when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any()))
+        when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
           .thenReturn(Future.failed(new RuntimeException("failed to upsert enrolment")))
 
         val result = TestEtmpRegimeService.upsertAtedKnownFacts(Some("UTR"), Some("postcode"), "atedRefNumber", "LTD")
@@ -338,7 +340,7 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
       }
 
       "provided details to enrolment for SOP" in {
-        when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any()))
+        when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
           .thenReturn(Future.failed(new RuntimeException("failed to upsert enrolment")))
 
         val result = TestEtmpRegimeService.upsertAtedKnownFacts(Some("UTR"), Some("postcode"), "atedRefNumber", "SOP")

@@ -18,6 +18,7 @@ package connectors
 
 import audit.Auditable
 import com.codahale.metrics.Timer
+
 import javax.inject.Inject
 import metrics.{MetricsEnum, ServiceMetrics}
 import models._
@@ -30,8 +31,7 @@ import uk.gov.hmrc.play.audit.model.{Audit, EventTypes}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import utils.GovernmentGatewayConstants
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class DefaultTaxEnrolmentsConnector @Inject()(val servicesConfig: ServicesConfig,
                                               val auditConnector: AuditConnector,
@@ -51,7 +51,7 @@ trait TaxEnrolmentsConnector extends RawResponseReads with Auditable with Loggin
   def metrics: ServiceMetrics
   def http: HttpClient
 
-  def addKnownFacts(verifiers: Verifiers, atedRefNo: String)(implicit headerCarrier: HeaderCarrier): Future[HttpResponse] = {
+  def addKnownFacts(verifiers: Verifiers, atedRefNo: String)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
 
     val atedRefIdentifier = "ATEDRefNumber"
     val enrolmentKey = s"${GovernmentGatewayConstants.AtedServiceName}~$atedRefIdentifier~$atedRefNo"
@@ -74,7 +74,7 @@ trait TaxEnrolmentsConnector extends RawResponseReads with Auditable with Loggin
     }
   }
 
-  private def auditAddKnownFacts(putUrl: String, verifiers: Verifiers, response: HttpResponse)(implicit hc: HeaderCarrier): Unit = {
+  private def auditAddKnownFacts(putUrl: String, verifiers: Verifiers, response: HttpResponse)(implicit hc: HeaderCarrier, ec: ExecutionContext): Unit = {
     val status = response.status match {
       case NO_CONTENT => EventTypes.Succeeded
       case _ => EventTypes.Failed
@@ -89,7 +89,7 @@ trait TaxEnrolmentsConnector extends RawResponseReads with Auditable with Loggin
         "status" -> s"$status"))
   }
 
-  def getATEDUsers(atedRef: String)(implicit hc: HeaderCarrier): Future[Either[Int, AtedUsers]] = {
+  def getATEDUsers(atedRef: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[Int, AtedUsers]] = {
 
     val url = s"$enrolmentStoreProxyUrl/enrolment-store-proxy/enrolment-store/enrolments/HMRC-ATED-ORG~ATEDRefNumber~$atedRef/users"
     http.GET[HttpResponse](url, Seq.empty).map {

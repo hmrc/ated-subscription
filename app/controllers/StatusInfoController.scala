@@ -24,14 +24,13 @@ import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.{Inject, Named}
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class StatusInfoController @Inject()(val auditConnector: AuditConnector,
                                      val etmpRegimeService: EtmpRegimeService,
                                      val enrolmentService: EnrolmentService,
                                      cc: ControllerComponents,
-                                     @Named("appName") val appName: String) extends BackendController(cc) with Logging {
+                                     @Named("appName") val appName: String)(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
 
   def enrolledUsers(safeID: String): Action[AnyContent] = Action.async { implicit request =>
     etmpRegimeService.getEtmpBusinessDetails(safeID).flatMap {
