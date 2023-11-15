@@ -61,8 +61,8 @@ trait SubscribeService extends Logging {
         if (isEmacFeatureToggle) {
 
           val postcode = ((data \ "postcode").asOpt[String], (data \ "knownFactPostcode").asOpt[String]) match {
-            case (pc@Some(_), _) => pc
-            case (None, pc@Some(_)) => pc
+            case (Some(x), _) if x.nonEmpty => Some(x)
+            case (None, Some(x)) if x.nonEmpty => Some(x)
             case _ => None
           }
 
