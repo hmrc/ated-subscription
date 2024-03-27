@@ -1,15 +1,20 @@
 import play.routes.compiler.InjectedRoutesGenerator
 import play.sbt.routes.RoutesKeys.routesGenerator
-import sbt.Keys._
-import sbt.{Def, _}
-import uk.gov.hmrc.DefaultBuildSettings._
+import sbt.Keys.*
+import sbt.{Def, *}
+import uk.gov.hmrc.DefaultBuildSettings
+import uk.gov.hmrc.DefaultBuildSettings.{defaultSettings, scalaSettings}
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
 import uk.gov.hmrc.versioning.SbtGitVersioning.autoImport.majorVersion
 
 val appName: String = "ated-subscription"
 
+ThisBuild / majorVersion := 2
+ThisBuild / scalaVersion := "2.13.12"
+
 lazy val appDependencies : Seq[ModuleID] = AppDependencies()
-lazy val plugins: Seq[Plugins] = Seq(play.sbt.PlayScala, SbtDistributablesPlugin)
+lazy val plugins : Seq[Plugins] = Seq(play.sbt.PlayScala, SbtDistributablesPlugin)
+
 lazy val playSettings: Seq[Setting[_]] = Seq.empty
 
   lazy val scoverageSettings: Seq[Def.Setting[_ >: String with Double with Boolean]] = {
@@ -24,24 +29,16 @@ lazy val playSettings: Seq[Setting[_]] = Seq.empty
 
 lazy val microservice = Project(appName, file("."))
   .enablePlugins(plugins: _*)
-  .settings(playSettings ++ scoverageSettings: _*)
-  .settings( majorVersion := 2 )
-  .settings(scalaSettings: _*)
-  .configs(IntegrationTest)
-  .settings(defaultSettings(): _*)
   .settings(
-    addTestReportOption(IntegrationTest, "int-test-reports"),
-    inConfig(IntegrationTest)(Defaults.itSettings),
-    scalaVersion := "2.13.12",
     libraryDependencies ++= appDependencies,
     Test / parallelExecution := false,
     Test / fork := false,
     retrieveManaged := true,
     routesGenerator := InjectedRoutesGenerator,
-    IntegrationTest / Keys.fork :=  false,
-    IntegrationTest / unmanagedSourceDirectories :=  (IntegrationTest / baseDirectory)(base => Seq(base / "it")).value,
-    IntegrationTest / parallelExecution := false,
-    scalacOptions += "-Wconf:src=routes/.*:s"
+    scalacOptions += "-Wconf:src=routes/.*:s",
+    scoverageSettings,
+    scalaSettings,
+    defaultSettings(),
   )
   .settings(
     resolvers += Resolver.typesafeRepo("releases"),
@@ -49,3 +46,9 @@ lazy val microservice = Project(appName, file("."))
   )
   .enablePlugins(SbtDistributablesPlugin)
   .disablePlugins(JUnitXmlReportPlugin)
+
+lazy val it = project
+  .enablePlugins(PlayScala)
+  .dependsOn(microservice % "test->test") // the "test->test" allows reusing test code and test dependencies
+  .settings(DefaultBuildSettings.itSettings())
+  .settings(libraryDependencies ++= AppDependencies.itDependencies)
