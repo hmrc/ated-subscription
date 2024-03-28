@@ -1,6 +1,6 @@
 import play.routes.compiler.InjectedRoutesGenerator
 import play.sbt.routes.RoutesKeys.routesGenerator
-import sbt.Keys.*
+import sbt.Keys.{parallelExecution, *}
 import sbt.{Def, *}
 import uk.gov.hmrc.DefaultBuildSettings
 import uk.gov.hmrc.DefaultBuildSettings.{defaultSettings, scalaSettings}
