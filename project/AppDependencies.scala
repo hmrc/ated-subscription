@@ -1,34 +1,26 @@
-import sbt._
+import sbt.*
 
 object AppDependencies {
 
-  import play.sbt.PlayImport._
   import play.core.PlayVersion
+  import play.sbt.PlayImport.*
 
   val compile: Seq[ModuleID] = Seq(
     ws,
-    "uk.gov.hmrc" %% "bootstrap-backend-play-28" % "7.21.0"
+    "uk.gov.hmrc" %% "bootstrap-backend-play-30" % "8.5.0"
   )
 
-  def apply(): Seq[sbt.ModuleID] = compile ++ Test()
+  def apply(): Seq[ModuleID] = compile ++ test
 
-  trait TestDependencies {
-    lazy val scope: String = "it,test"
-    val test: Seq[ModuleID]
-  }
+  val test: Seq[ModuleID] = Seq(
+    "uk.gov.hmrc"                  %% "bootstrap-test-play-30" % "8.5.0",
+    "org.scalatestplus.play"       %% "scalatestplus-play"     % "7.0.1",
+    "org.mockito"                  %  "mockito-core"           % "5.11.0" ,
+    "org.scalatestplus"            %% "mockito-4-11"           % "3.2.18.0",
+    "com.fasterxml.jackson.module" %% "jackson-module-scala"   % "2.17.0"
+  ).map(_ % Test)
 
-  object Test {
-    def apply(): Seq[sbt.ModuleID] = new TestDependencies {
-      override lazy val test = Seq(
-        "uk.gov.hmrc"                  %% "bootstrap-test-play-28" % "7.21.0"            % scope,
-        "org.scalatestplus.play"       %% "scalatestplus-play"     % "5.1.0"             % scope,
-        "com.typesafe.play"            %% "play-test"              % PlayVersion.current % scope,
-        "org.mockito"                  %  "mockito-core"           % "5.4.0"             % scope,
-        "org.scalatestplus"            %% "mockito-4-11"           % "3.2.16.0"          % scope,
-        "com.fasterxml.jackson.module" %% "jackson-module-scala"   % "2.15.2"            % scope,
-        "com.github.tomakehurst"       %  "wiremock-jre8"          % "2.35.0"            % IntegrationTest withSources()
-      )
-    }.test
-  }
-
+  val itDependencies: Seq[ModuleID] = Seq(
+    "org.wiremock" % "wiremock" % "3.4.2" % Test
+  )
 }

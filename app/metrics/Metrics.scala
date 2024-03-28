@@ -18,14 +18,12 @@ package metrics
 
 import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.Timer.Context
-import com.kenshoo.play.metrics.Metrics
-import javax.inject.Inject
 import metrics.MetricsEnum.MetricsEnum
+import javax.inject.Inject
 
-class DefaultServiceMetrics @Inject()(val metrics: Metrics) extends ServiceMetrics
+class DefaultServiceMetrics @Inject()(val registry: MetricRegistry) extends ServiceMetrics
 trait ServiceMetrics {
-  val metrics: Metrics
-  val registry: MetricRegistry = metrics.defaultRegistry
+  val registry: MetricRegistry
 
   val timers = Map(
     MetricsEnum.GgAdminAddKnownFacts -> registry.timer("gga-add-known-facts-client-response-timer"),
