@@ -89,9 +89,9 @@ trait TaxEnrolmentsConnector extends RawResponseReads with Auditable with Loggin
         "status" -> s"$status"))
   }
 
-  def getATEDUsers(atedRef: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[Int, AtedUsers]] = {
+  def getATEDGroups(atedRef: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[Int, AtedUsers]] = {
 
-    val url = s"$enrolmentStoreProxyUrl/enrolment-store-proxy/enrolment-store/enrolments/HMRC-ATED-ORG~ATEDRefNumber~$atedRef/users"
+    val url = s"$enrolmentStoreProxyUrl/enrolment-store-proxy/enrolment-store/enrolments/HMRC-ATED-ORG~ATEDRefNumber~$atedRef/groups?ignore-assignments=true"
     http.GET[HttpResponse](url, Seq.empty).map {
       response =>
         response.status match {
