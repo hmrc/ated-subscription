@@ -18,7 +18,7 @@ package models
 
 import play.api.libs.json.{Json, OFormat}
 
-case class AtedUsers(principalUserIds: List[String], delegatedUserIds: List[String])
+case class AtedUsers(principalGroupIds: List[String], delegatedGroupIds: List[String])
 
 
 object AtedUsers {

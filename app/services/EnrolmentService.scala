@@ -26,6 +26,6 @@ import scala.concurrent.{ExecutionContext, Future}
 class EnrolmentService @Inject()(enrolmentStoreConnector: TaxEnrolmentsConnector) {
 
   def atedUsers(atedRefNo: String)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Either[Int, AtedUsers]] =
-    enrolmentStoreConnector.getATEDUsers(atedRefNo)
+    enrolmentStoreConnector.getATEDGroups(atedRefNo)
 
 }

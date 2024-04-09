@@ -86,28 +86,28 @@ class TaxEnrolmentsConnectorSpec extends PlaySpec with GuiceOneServerPerSuite wi
       implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
       val jsOnData: JsValue = Json.toJson(atedUsersList)
       when(mockHttp.GET[HttpResponse](any(),any(), any())(any(),any(), any())).thenReturn(Future.successful(HttpResponse(OK, jsOnData.toString())))
-      val result: Future[Either[Int, AtedUsers]] = connector.getATEDUsers("ATED-123")
+      val result: Future[Either[Int, AtedUsers]] = connector.getATEDGroups("ATED-123")
       await(result) must be(Right(atedUsersList))
     }
 
     "for successful set of Ated users, return 200 success with Nil Ated Users list" in new Setup {
       implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
       when(mockHttp.GET[HttpResponse](any(),any(), any())(any(),any(), any())).thenReturn(Future.successful(HttpResponse(NO_CONTENT, "")))
-      val result: Future[Either[Int, AtedUsers]] = connector.getATEDUsers("ATED-123")
+      val result: Future[Either[Int, AtedUsers]] = connector.getATEDGroups("ATED-123")
       await(result) must be(Right(AtedUsers(Nil, Nil)))
     }
 
     "for BadRequest response from enrolments backend, return a Bad request response" in new Setup {
       implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
       when(mockHttp.GET[HttpResponse](any(),any(), any())(any(),any(), any())).thenReturn(Future.successful(HttpResponse(BAD_REQUEST, "")))
-      val result: Future[Either[Int, AtedUsers]] = connector.getATEDUsers("ATED-123")
+      val result: Future[Either[Int, AtedUsers]] = connector.getATEDGroups("ATED-123")
       await(result) must be(Left(BAD_REQUEST))
     }
 
     "for any other exception response from enrolments backend, return the same back to the caller" in new Setup {
       implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
       when(mockHttp.GET[HttpResponse](any(),any(), any())(any(),any(), any())).thenReturn(Future.successful(HttpResponse(NOT_FOUND, "")))
-      val result: Future[Either[Int, AtedUsers]] = connector.getATEDUsers("ATED-123")
+      val result: Future[Either[Int, AtedUsers]] = connector.getATEDGroups("ATED-123")
       await(result) must be(Left(NOT_FOUND))
     }
 
