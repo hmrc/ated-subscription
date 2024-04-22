@@ -27,6 +27,8 @@ import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.EventTypes
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import utils.PagerDutyHelper
+import utils.PagerDutyHelper.PagerDutyKeys
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -82,6 +84,9 @@ trait EtmpConnector extends RawResponseReads with Auditable with Logging {
             metrics.incrementFailedCounter(MetricsEnum.EtmpSubscribeAted)
             logger.warn(s"[ETMPConnector][subscribeAted] - status: $status")
             doFailedAudit("subscribeAtedFailed", data.toString, response.body)
+            PagerDutyHelper.pagerDutyLog(PagerDutyKeys.FAILED_TO_CREATE_ATED_SUBSCRIPTION,
+              Some(s"[ETMPConnector][subscribeAted] SessionId = ${headerCarrier.sessionId} :: " +
+                s"Response from ETMP: ${response.json}"))
             response
         }
     }
