@@ -80,8 +80,9 @@ trait EtmpConnector extends RawResponseReads with Auditable with Logging {
             response
           case status =>
             metrics.incrementFailedCounter(MetricsEnum.EtmpSubscribeAted)
-            logger.warn(s"[ETMPConnector][subscribeAted] - status: $status")
             doFailedAudit("subscribeAtedFailed", data.toString, response.body)
+            logger.error(s"[ETMPConnector][subscribeAted]: HttpStatus:$status :: SessionId = ${headerCarrier.sessionId} :: " +
+              s"Response from ETMP: ${response.body}")
             response
         }
     }
