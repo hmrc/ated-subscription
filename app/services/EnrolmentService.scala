@@ -27,5 +27,4 @@ class EnrolmentService @Inject()(enrolmentStoreConnector: TaxEnrolmentsConnector
 
   def atedUsers(atedRefNo: String)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[Either[Int, AtedUsers]] =
     enrolmentStoreConnector.getATEDGroups(atedRefNo)
-
 }

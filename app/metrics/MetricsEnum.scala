@@ -19,8 +19,8 @@ package metrics
 object MetricsEnum extends Enumeration {
 
   type MetricsEnum = Value
-  val GgAdminAddKnownFacts = Value
-  val EtmpSubscribeAted = Value
-  val EmacAddKnownFacts = Value
+  val GgAdminAddKnownFacts: metrics.MetricsEnum.Value = Value
+  val EtmpSubscribeAted: metrics.MetricsEnum.Value = Value
+  val EmacAddKnownFacts: metrics.MetricsEnum.Value = Value
 
 }

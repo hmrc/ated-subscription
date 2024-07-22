@@ -70,7 +70,7 @@ class EtmpRegimeService @Inject()(etmpConnector: EtmpConnector,
                            businessType: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     def validateVerifier(value: Option[String]): Option[String] =
       value match {
-        case Some(x) if !x.trim().isEmpty => Some(x)
+        case Some(x) if x.trim().isEmpty => Some(x)
         case _ => None
       }
 
@@ -113,7 +113,7 @@ class EtmpRegimeService @Inject()(etmpConnector: EtmpConnector,
       }
   }
 
-  def compareOptionalStrings(bcdValue: Option[String], erdValue: Option[String]): Boolean = {
+  private def compareOptionalStrings(bcdValue: Option[String], erdValue: Option[String]): Boolean = {
     if (bcdValue.isEmpty && erdValue.isEmpty) {
       true
     } else {

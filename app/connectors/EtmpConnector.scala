@@ -24,6 +24,7 @@ import play.api.Logging
 import play.api.http.Status._
 import play.api.libs.json.JsValue
 import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.EventTypes
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
@@ -33,7 +34,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class DefaultEtmpConnector @Inject()(val servicesConfig: ServicesConfig,
                                      val auditConnector: AuditConnector,
                                      val metrics: ServiceMetrics,
-                                     val http: HttpClient) extends EtmpConnector {
+                                     val http: HttpClientV2) extends EtmpConnector {
   val serviceURL: String = servicesConfig.baseUrl("etmp-hod")
   val baseURI = "annual-tax-enveloped-dwellings"
   val subscribeUri = "subscribe"
@@ -49,28 +50,20 @@ trait EtmpConnector extends RawResponseReads with Auditable with Logging {
   def urlHeaderEnvironment: String
   def urlHeaderAuthorization: String
   def metrics: ServiceMetrics
-  def http: HttpClient
-  val regimeURI = "/registration/details"
-
-  def createHeaders: Seq[(String, String)] = {
-    Seq(
-      "Environment" -> urlHeaderEnvironment,
-      "Authorization" -> urlHeaderAuthorization
-    )
-  }
+  def http: HttpClientV2
+  private val regimeURI = "/registration/details"
 
   def atedRegime(safeId: String)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
-    http.GET[HttpResponse](
-      s"""$serviceURL$regimeURI?safeid=$safeId&regime=ATED""", Seq.empty, createHeaders
-    )
+    http.get(url"""$serviceURL$regimeURI?safeid=$safeId&regime=ATED""").execute[HttpResponse]
   }
 
   def subscribeAted(data: JsValue)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val timerContext = metrics.startTimer(MetricsEnum.EtmpSubscribeAted)
 
-    http.POST[JsValue, HttpResponse](
-      s"$serviceURL/$baseURI/$subscribeUri", data, createHeaders
-    ) map {
+    http.post(url"""$serviceURL/$baseURI/$subscribeUri""").withBody(data)
+      .setHeader("Environment" -> urlHeaderEnvironment)
+      .setHeader("Authorization" -> urlHeaderAuthorization)
+      .execute[HttpResponse] map {
       response =>
         timerContext.stop()
         auditSubscribe(data, response)
