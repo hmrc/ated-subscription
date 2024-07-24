@@ -53,31 +53,37 @@ trait EtmpConnector extends RawResponseReads with Auditable with Logging {
   def http: HttpClientV2
   private val regimeURI = "/registration/details"
 
+  def createHeaders: Seq[(String, String)] = {
+    Seq(
+      "Environment" -> urlHeaderEnvironment,
+      "Authorization" -> urlHeaderAuthorization
+    )
+  }
+
   def atedRegime(safeId: String)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
-    http.get(url"""$serviceURL$regimeURI?safeid=$safeId&regime=ATED""").execute[HttpResponse]
+    val getUrl = s"""$serviceURL$regimeURI?safeid=$safeId&regime=ATED"""
+    http.get(url"$getUrl").setHeader(createHeaders: _*).execute[HttpResponse]
   }
 
   def subscribeAted(data: JsValue)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val timerContext = metrics.startTimer(MetricsEnum.EtmpSubscribeAted)
+    val postUrl=s"$serviceURL/$baseURI/$subscribeUri"
 
-    http.post(url"""$serviceURL/$baseURI/$subscribeUri""").withBody(data)
-      .setHeader("Environment" -> urlHeaderEnvironment)
-      .setHeader("Authorization" -> urlHeaderAuthorization)
-      .execute[HttpResponse] map {
-      response =>
-        timerContext.stop()
-        auditSubscribe(data, response)
-        response.status match {
-          case OK =>
-            metrics.incrementSuccessCounter(MetricsEnum.EtmpSubscribeAted)
-            response
-          case status =>
-            metrics.incrementFailedCounter(MetricsEnum.EtmpSubscribeAted)
-            doFailedAudit("subscribeAtedFailed", data.toString, response.body)
-            logger.error(s"[ETMPConnector][subscribeAted]: HttpStatus:$status :: SessionId = ${headerCarrier.sessionId} :: " +
-              s"Response from ETMP: ${response.body}")
-            response
-        }
+    http.post(url"$postUrl").withBody(data).setHeader(createHeaders: _*).execute[HttpResponse].map
+    { response =>
+      timerContext.stop()
+      auditSubscribe(data, response)
+      response.status match {
+        case OK =>
+          metrics.incrementSuccessCounter(MetricsEnum.EtmpSubscribeAted)
+          response
+        case status =>
+          metrics.incrementFailedCounter(MetricsEnum.EtmpSubscribeAted)
+          doFailedAudit("subscribeAtedFailed", data.toString, response.body)
+          logger.error(s"[ETMPConnector][subscribeAted]: HttpStatus:$status :: SessionId = ${headerCarrier.sessionId} ::" +
+            s"Response from ETMP: ${response.body}")
+          response
+      }
     }
   }
 
@@ -116,5 +122,4 @@ trait EtmpConnector extends RawResponseReads with Auditable with Logging {
         "submittedPostcode" -> getAddressPiece((data \\ "postalCode").headOption),
         "submittedCountry" -> (data \\ "countryCode").head.as[String]))
   }
-
 }

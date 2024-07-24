@@ -22,7 +22,6 @@ import play.api.inject.{Binding, Module, bind => playBind}
 import play.api.{Configuration, Environment}
 import services.{DefaultSubscribeService, SubscribeService}
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.play.bootstrap.auth.DefaultAuthConnector
 
 class ServiceBindings extends Module {
@@ -32,7 +31,6 @@ class ServiceBindings extends Module {
       playBind(classOf[EtmpConnector]).to(classOf[DefaultEtmpConnector]),
       playBind(classOf[GovernmentGatewayAdminConnector]).to(classOf[DefaultGovernmentGatewayAdminConnector]),
       playBind(classOf[TaxEnrolmentsConnector]).to(classOf[DefaultTaxEnrolmentsConnector]),
-      playBind(classOf[HttpClientV2]).to(classOf[HttpClientV2]),
       playBind(classOf[SubscribeService]).to(classOf[DefaultSubscribeService]),
       playBind(classOf[ServiceMetrics]).to(classOf[DefaultServiceMetrics])
     )

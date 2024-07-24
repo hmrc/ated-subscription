@@ -16,22 +16,21 @@
 
 package helpers.application
 
-import connectors.{DefaultEtmpConnector, DefaultGovernmentGatewayAdminConnector, DefaultTaxEnrolmentsConnector, EtmpConnector, GovernmentGatewayAdminConnector, TaxEnrolmentsConnector}
-import helpers.wiremock.WireMockConfig
+import connectors._
 import metrics.{DefaultServiceMetrics, ServiceMetrics}
 import org.scalatest.TestSuite
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
+import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.ws.{WSClient, WSRequest}
-import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.play.bootstrap.auth.DefaultAuthConnector
-import play.api.inject.bind
 import services.{DefaultSubscribeService, SubscribeService}
-import uk.gov.hmrc.play.bootstrap.http.DefaultHttpClient
-import uk.gov.hmrc.http.HttpClient
+import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.http.test.WireMockSupport
+import uk.gov.hmrc.play.bootstrap.auth.DefaultAuthConnector
 
-trait IntegrationApplication extends GuiceOneServerPerSuite with WireMockConfig {
+
+trait IntegrationApplication extends GuiceOneServerPerSuite with WireMockSupport {
   self: TestSuite =>
 
   val currentAppBaseUrl: String = "ated-subscription"
@@ -48,7 +47,6 @@ trait IntegrationApplication extends GuiceOneServerPerSuite with WireMockConfig 
     .overrides(bind(classOf[EtmpConnector]).to(classOf[DefaultEtmpConnector]))
     .overrides(bind(classOf[GovernmentGatewayAdminConnector]).to(classOf[DefaultGovernmentGatewayAdminConnector]))
     .overrides(bind(classOf[TaxEnrolmentsConnector]).to(classOf[DefaultTaxEnrolmentsConnector]))
-    .overrides(bind(classOf[HttpClient]).to(classOf[DefaultHttpClient]))
     .overrides(bind(classOf[SubscribeService]).to(classOf[DefaultSubscribeService]))
     .overrides(bind(classOf[ServiceMetrics]).to(classOf[DefaultServiceMetrics]))
     .configure(    "microservice.services.auth.host"                     -> wireMockHost,

@@ -16,52 +16,37 @@
 
 package uk.gov.hmrc.connectors
 
-import java.util.UUID
-
-import builders.TestAudit
-import connectors.EtmpConnector
+import connectors.{DefaultEtmpConnector, EtmpConnector}
 import metrics.ServiceMetrics
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.PlaySpec
-import org.scalatestplus.play.guice.GuiceOneServerPerSuite
-import play.api.libs.json.{JsValue, Json}
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.libs.json.Json
 import play.api.test.Helpers._
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
-import uk.gov.hmrc.play.audit.model.Audit
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.utils.TestJson
 
-import scala.concurrent.Future
+import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
-class EtmpConnectorSpec extends PlaySpec with GuiceOneServerPerSuite with MockitoSugar with BeforeAndAfterEach with TestJson {
+class EtmpConnectorSpec extends PlaySpec with ConnectorTest with GuiceOneAppPerSuite with MockitoSugar with BeforeAndAfterEach with TestJson {
 
-  val mockWSHttp: HttpClient = mock[HttpClient]
   val mockServiceMetrics: ServiceMetrics = app.injector.instanceOf[ServiceMetrics]
-  val mockServiceUrl = "etmp-hod"
+  val auditConnector: AuditConnector = app.injector.instanceOf[AuditConnector]
+  val servicesConfig: ServicesConfig = app.injector.instanceOf[ServicesConfig]
 
-  trait Setup {
-    class TestEtmpConnector extends EtmpConnector {
-      override val serviceURL: String = mockServiceUrl
-      override val baseURI = "annual-tax-enveloped-dwellings"
-      override val subscribeUri = "subscribe"
-      override val http: HttpClient = mockWSHttp
-      override val urlHeaderEnvironment: String = ""
-      override val urlHeaderAuthorization: String = ""
-      override val auditConnector: AuditConnector = app.injector.instanceOf[AuditConnector]
-      override val audit: Audit = new TestAudit(auditConnector)
-
-      override def metrics: ServiceMetrics = mockServiceMetrics
-    }
-
-    val connector: TestEtmpConnector = new TestEtmpConnector
+  class Setup extends ConnectorTest {
+    val testEtmpConnector: EtmpConnector = new DefaultEtmpConnector(servicesConfig, auditConnector, mockServiceMetrics, mockHttpClient)
   }
 
   override def beforeEach(): Unit = {
-    reset(mockWSHttp)
+    reset(mockHttpClient)
   }
 
   "DesConnector" must {
@@ -124,43 +109,36 @@ class EtmpConnectorSpec extends PlaySpec with GuiceOneServerPerSuite with Mockit
     )
 
     "for successful subscription, return subscription response" in new Setup {
-      implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
-      when(mockWSHttp.POST[JsValue, HttpResponse]
-        (any(), any(), any())(any(),
-        any(), any(), any()))
-        .thenReturn(Future.successful(HttpResponse(OK, successfulSubscribeJson.toString)))
-      val result: Future[HttpResponse] = connector.subscribeAted(inputJson)
+      override implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
+      when(requestBuilderExecute[HttpResponse]).thenReturn(Future.successful(HttpResponse(OK, successfulSubscribeJson.toString)))
+
+      val result: Future[HttpResponse] = testEtmpConnector.subscribeAted(inputJson)
       await(result).json must be(successfulSubscribeJson)
     }
 
     "for successful subscription, return subscription response and audit international address" in new Setup {
-      implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
-      when(mockWSHttp.POST[JsValue, HttpResponse]
-        (any(), any(), any())(any(),
-        any(), any(), any()))
-        .thenReturn(Future.successful(HttpResponse(OK, successfulSubscribeJson.toString)))
-      val result: Future[HttpResponse] = connector.subscribeAted(inputJsonNoPostcode)
+      override implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
+      when(requestBuilder.execute[HttpResponse](any, any)).thenReturn(Future.successful(HttpResponse(OK, successfulSubscribeJson.toString)))
+
+      val result: Future[HttpResponse] = testEtmpConnector.subscribeAted(inputJsonNoPostcode)
       await(result).json must be(successfulSubscribeJson)
     }
 
     "for unsuccessful subscription, return subscription response" in new Setup {
-      implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
-      when(mockWSHttp.POST[JsValue, HttpResponse]
-        (any(), any(), any())(any(),
-        any(), any(), any()))
-        .thenReturn(Future.successful(HttpResponse(BAD_REQUEST, unsuccessfulSubscribeJson.toString)))
-      val result: Future[HttpResponse] = connector.subscribeAted(inputJson)
+      override implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
+      when(requestBuilder.execute[HttpResponse](any, any)).thenReturn(Future.successful(HttpResponse(BAD_REQUEST, unsuccessfulSubscribeJson.toString)))
+
+      val result: Future[HttpResponse] = testEtmpConnector.subscribeAted(inputJson)
       await(result).json must be(unsuccessfulSubscribeJson)
     }
   }
 
   "atedRegime" should {
     "return an HttpResponse" in new Setup {
-      implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
-      when(mockWSHttp.GET[HttpResponse](any(), any(), any())(any(), any(), any()))
-        .thenReturn(Future.successful(HttpResponse(OK, etmpWithRegimeOrgResponse.toString)))
-      val result: Future[HttpResponse] = connector.atedRegime("SAFEID123")
+      override implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
+      when(requestBuilder.execute[HttpResponse](any, any)).thenReturn(Future.successful(HttpResponse(OK, etmpWithRegimeOrgResponse.toString)))
 
+      val result: Future[HttpResponse] = testEtmpConnector.atedRegime("SAFEID123")
       await(result).status must be(OK)
     }
   }
