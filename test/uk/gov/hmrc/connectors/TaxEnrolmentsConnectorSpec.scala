@@ -28,6 +28,7 @@ import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.libs.json.{JsValue, Json}
 import play.api.test.Helpers._
 import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
@@ -39,6 +40,7 @@ class TaxEnrolmentsConnectorSpec extends PlaySpec with GuiceOneServerPerSuite wi
 
   val mockServiceMetrics: ServiceMetrics = app.injector.instanceOf[ServiceMetrics]
   val mockServiceUrl = "tax-enrolments"
+  val mockWSHttp: HttpClientV2 = mock[HttpClientV2]
   val auditConnector: AuditConnector = app.injector.instanceOf[AuditConnector]
   val servicesConfig: ServicesConfig = app.injector.instanceOf[ServicesConfig]
 
