@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ trait EtmpConnector extends RawResponseReads with Auditable with Logging {
   def urlHeaderAuthorization: String
   def metrics: ServiceMetrics
   def http: HttpClientV2
-  private val regimeURI = "/registration/details"
+  val regimeURI = "/registration/details"
 
   def createHeaders: Seq[(String, String)] = {
     Seq(
@@ -68,9 +68,7 @@ trait EtmpConnector extends RawResponseReads with Auditable with Logging {
   def subscribeAted(data: JsValue)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val timerContext = metrics.startTimer(MetricsEnum.EtmpSubscribeAted)
     val postUrl=s"$serviceURL/$baseURI/$subscribeUri"
-
-    http.post(url"$postUrl").withBody(data).setHeader(createHeaders: _*).execute[HttpResponse].map
-    { response =>
+    http.post(url"$postUrl").withBody(data).setHeader(createHeaders: _*).execute[HttpResponse].map{ response =>
       timerContext.stop()
       auditSubscribe(data, response)
       response.status match {
@@ -80,7 +78,7 @@ trait EtmpConnector extends RawResponseReads with Auditable with Logging {
         case status =>
           metrics.incrementFailedCounter(MetricsEnum.EtmpSubscribeAted)
           doFailedAudit("subscribeAtedFailed", data.toString, response.body)
-          logger.error(s"[ETMPConnector][subscribeAted]: HttpStatus:$status :: SessionId = ${headerCarrier.sessionId} ::" +
+          logger.error(s"[ETMPConnector][subscribeAted]: HttpStatus:$status :: SessionId = ${headerCarrier.sessionId} :: " +
             s"Response from ETMP: ${response.body}")
           response
       }
@@ -122,4 +120,6 @@ trait EtmpConnector extends RawResponseReads with Auditable with Logging {
         "submittedPostcode" -> getAddressPiece((data \\ "postalCode").headOption),
         "submittedCountry" -> (data \\ "countryCode").head.as[String]))
   }
+
 }
+
