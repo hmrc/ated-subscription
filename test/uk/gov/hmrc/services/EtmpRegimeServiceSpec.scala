@@ -206,8 +206,7 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
   }
 
   def makeBusinessCustomerDetails(businessName: String, sapNumber: String, safeId: String,
-                                  isAGroup: Boolean, agentRefNumber: Option[String],
-                                  firstName: Option[String], lastName: Option[String]): BusinessCustomerDetails =
+                                  isAGroup: Boolean, agentRefNumber: Option[String]): BusinessCustomerDetails =
     BusinessCustomerDetails(
       businessName,
       BusinessTypeConstants.limitedPartnership,
@@ -232,29 +231,29 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
     "return true" when {
 
       "all elements match" in {
-        val bcd = makeBusinessCustomerDetails("businessName", "sapNumber", "safeId", true, Some("agentRef"), Some("first"), Some("last"))
-        val ecd = makeEtmpDetails("businessName", "sapNumber", "safeId", true, "regimeRef", Some("agentRef"), Some("first"), Some("last"))
+        val bcd = makeBusinessCustomerDetails("businessName", "sapNumber", "safeId", isAGroup = true, Some("agentRef"))
+        val ecd = makeEtmpDetails("businessName", "sapNumber", "safeId", isAGroup = true, "regimeRef", Some("agentRef"), Some("first"), Some("last"))
 
         TestEtmpRegimeService.matchOrg(bcd, ecd) must be(true)
       }
 
       "all elements match regardless of case" in {
-        val bcd = makeBusinessCustomerDetails("businessName", "SAPNUMBER", "safeId", true, Some("agentRef"), Some("FIRST"), Some("last"))
-        val ecd = makeEtmpDetails("BUSINESSNAME", "sapNumber", "SAFEID", true, "regimeRef", Some("AGENTREF"), Some("first"), Some("LAST"))
+        val bcd = makeBusinessCustomerDetails("businessName", "SAPNUMBER", "safeId", isAGroup = true, Some("agentRef"))
+        val ecd = makeEtmpDetails("BUSINESSNAME", "sapNumber", "SAFEID", isAGroup = true, "regimeRef", Some("AGENTREF"), Some("first"), Some("LAST"))
 
         TestEtmpRegimeService.matchOrg(bcd, ecd) must be(true)
       }
 
       "AgentRef are both None" in {
-        val bcd = makeBusinessCustomerDetails("businessName", "sapNumber", "safeId", true, None, Some("first"), Some("last"))
-        val ecd = makeEtmpDetails("businessName", "sapNumber", "safeId", true, "regimeRef", None, Some("firstLast"), Some("lastFirst"))
+        val bcd = makeBusinessCustomerDetails("businessName", "sapNumber", "safeId", isAGroup = true, None)
+        val ecd = makeEtmpDetails("businessName", "sapNumber", "safeId", isAGroup = true, "regimeRef", None, Some("firstLast"), Some("lastFirst"))
 
         TestEtmpRegimeService.matchOrg(bcd, ecd) must be(true)
       }
 
       "first and last name are both None" in {
-        val bcd = makeBusinessCustomerDetails("businessName", "sapNumber", "safeId", true, None, None, None)
-        val ecd = makeEtmpDetails("businessName", "sapNumber", "safeId", true, "regimeRef", None, None, None)
+        val bcd = makeBusinessCustomerDetails("businessName", "sapNumber", "safeId", isAGroup = true, None)
+        val ecd = makeEtmpDetails("businessName", "sapNumber", "safeId", isAGroup = true, "regimeRef", None, None, None)
 
         TestEtmpRegimeService.matchOrg(bcd, ecd) must be(true)
       }
@@ -262,36 +261,36 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
 
     "return false" when {
       "sapNumber does not match" in {
-        val bcd = makeBusinessCustomerDetails("businessName", "sapNumber", "safeId", true, Some("agentRef"), Some("first"), Some("last"))
-        val ecd = makeEtmpDetails("businessName", "sapNumberAltered", "safeId", true, "regimeRef", Some("agentRef"), Some("first"), Some("last"))
+        val bcd = makeBusinessCustomerDetails("businessName", "sapNumber", "safeId", isAGroup = true, Some("agentRef"))
+        val ecd = makeEtmpDetails("businessName", "sapNumberAltered", "safeId", isAGroup = true, "regimeRef", Some("agentRef"), Some("first"), Some("last"))
 
         TestEtmpRegimeService.matchOrg(bcd, ecd) must be(false)
       }
 
       "safeId and regimeRef do not match" in {
-        val bcd = makeBusinessCustomerDetails("businessName", "sapNumber", "safeIdAlt", true, Some("agentRef"), Some("first"), Some("last"))
-        val ecd = makeEtmpDetails("businessName", "sapNumber", "safeId", true, "regimeRefAlt", Some("agentRef"), Some("first"), Some("last"))
+        val bcd = makeBusinessCustomerDetails("businessName", "sapNumber", "safeIdAlt", isAGroup = true, Some("agentRef"))
+        val ecd = makeEtmpDetails("businessName", "sapNumber", "safeId", isAGroup = true, "regimeRefAlt", Some("agentRef"), Some("first"), Some("last"))
 
         TestEtmpRegimeService.matchOrg(bcd, ecd) must be(false)
       }
 
       "business name does not match" in {
-        val bcd = makeBusinessCustomerDetails("businessName", "sapNumber", "safeId", true, Some("agentRef"), Some("first"), Some("last"))
-        val ecd = makeEtmpDetails("businessNameDiff", "sapNumber", "safeId", true, "regimeRef", Some("agentRef"), Some("firstLast"), Some("lastFirst"))
+        val bcd = makeBusinessCustomerDetails("businessName", "sapNumber", "safeId", isAGroup = true, Some("agentRef"))
+        val ecd = makeEtmpDetails("businessNameDiff", "sapNumber", "safeId", isAGroup = true, "regimeRef", Some("agentRef"), Some("firstLast"), Some("lastFirst"))
 
         TestEtmpRegimeService.matchOrg(bcd, ecd) must be(false)
       }
 
       "AgentRef does not match" in {
-        val bcd = makeBusinessCustomerDetails("businessName", "sapNumber", "safeId", true, Some("differentAgentRef"), Some("first"), Some("last"))
-        val ecd = makeEtmpDetails("businessName", "sapNumber", "safeId", true, "regimeRef", Some("agentRef"), Some("firstLast"), Some("lastFirst"))
+        val bcd = makeBusinessCustomerDetails("businessName", "sapNumber", "safeId", isAGroup = true, Some("differentAgentRef"))
+        val ecd = makeEtmpDetails("businessName", "sapNumber", "safeId", isAGroup = true, "regimeRef", Some("agentRef"), Some("firstLast"), Some("lastFirst"))
 
         TestEtmpRegimeService.matchOrg(bcd, ecd) must be(false)
       }
 
       "first and last does not match None" in {
-        val bcd = makeBusinessCustomerDetails("businessName", "sapNumber", "safeId", true, Some("differentAgentRef"), Some("first"), Some("last"))
-        val ecd = makeEtmpDetails("businessName", "sapNumber", "safeId", true, "regimeRef", Some("agentRef"), None, None)
+        val bcd = makeBusinessCustomerDetails("businessName", "sapNumber", "safeId", isAGroup = true, Some("differentAgentRef"))
+        val ecd = makeEtmpDetails("businessName", "sapNumber", "safeId", isAGroup = true, "regimeRef", Some("agentRef"), None, None)
 
         TestEtmpRegimeService.matchOrg(bcd, ecd) must be(false)
       }

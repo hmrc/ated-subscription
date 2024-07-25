@@ -18,38 +18,38 @@ package connectors
 
 import audit.Auditable
 import com.codahale.metrics.Timer
-
-import javax.inject.Inject
 import metrics.{MetricsEnum, ServiceMetrics}
 import models._
 import play.api.Logging
 import play.api.http.Status._
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.Json
 import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.{Audit, EventTypes}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import utils.GovernmentGatewayConstants
-
+import uk.gov.hmrc.http.HttpReads.Implicits._
+import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class DefaultTaxEnrolmentsConnector @Inject()(val servicesConfig: ServicesConfig,
                                               val auditConnector: AuditConnector,
                                               val metrics: ServiceMetrics,
-                                              val http: HttpClient) extends TaxEnrolmentsConnector {
+                                              val http: HttpClientV2) extends TaxEnrolmentsConnector {
   val serviceUrl: String = servicesConfig.baseUrl("tax-enrolments")
   val enrolmentStoreProxyUrl: String = servicesConfig.baseUrl("enrolment-store-proxy")
   val emacBaseUrl = s"$serviceUrl/tax-enrolments/enrolments"
   override val audit: Audit = new Audit("ated-subscription", auditConnector)
 }
 
-trait TaxEnrolmentsConnector extends RawResponseReads with Auditable with Logging {
+trait TaxEnrolmentsConnector extends Auditable with Logging {
 
   def serviceUrl: String
   def enrolmentStoreProxyUrl: String
   def emacBaseUrl: String
   def metrics: ServiceMetrics
-  def http: HttpClient
+  def http: HttpClientV2
 
   def addKnownFacts(verifiers: Verifiers, atedRefNo: String)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
 
@@ -58,19 +58,22 @@ trait TaxEnrolmentsConnector extends RawResponseReads with Auditable with Loggin
     val putUrl = s"$emacBaseUrl/$enrolmentKey"
 
     val timerContext: Timer.Context = metrics.startTimer(MetricsEnum.EmacAddKnownFacts)
-    http.PUT[JsValue, HttpResponse](putUrl, Json.toJson(verifiers), Seq.empty) map { response =>
-      timerContext.stop()
-      auditAddKnownFacts(putUrl, verifiers, response)
-      response.status match {
-        case NO_CONTENT =>
-          metrics.incrementSuccessCounter(MetricsEnum.EmacAddKnownFacts)
-          response
-        case status =>
-          metrics.incrementFailedCounter(MetricsEnum.EmacAddKnownFacts)
-          logger.warn(s"[TaxEnrolmentsConnector][addKnownFacts] - status: $status")
-          doFailedAudit("addKnownFacts", verifiers.toString, response.body)
-          response
-      }
+    http.put(url"$putUrl")
+      .withBody(Json.toJson(verifiers))
+      .execute[HttpResponse] map {
+      response =>
+        timerContext.stop()
+        auditAddKnownFacts(putUrl, verifiers, response)
+        response.status match {
+          case NO_CONTENT =>
+            metrics.incrementSuccessCounter(MetricsEnum.EmacAddKnownFacts)
+            response
+          case status =>
+            metrics.incrementFailedCounter(MetricsEnum.EmacAddKnownFacts)
+            logger.warn(s"[TaxEnrolmentsConnector][addKnownFacts] - status: $status")
+            doFailedAudit("addKnownFacts", verifiers.toString, response.body)
+            response
+        }
     }
   }
 
@@ -91,8 +94,8 @@ trait TaxEnrolmentsConnector extends RawResponseReads with Auditable with Loggin
 
   def getATEDGroups(atedRef: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[Int, AtedUsers]] = {
 
-    val url = s"$enrolmentStoreProxyUrl/enrolment-store-proxy/enrolment-store/enrolments/HMRC-ATED-ORG~ATEDRefNumber~$atedRef/groups?ignore-assignments=true"
-    http.GET[HttpResponse](url, Seq.empty).map {
+    val url = url"""$enrolmentStoreProxyUrl/enrolment-store-proxy/enrolment-store/enrolments/HMRC-ATED-ORG~ATEDRefNumber~$atedRef/groups?ignore-assignments=true"""
+    http.get(url).execute[HttpResponse].map{
       response =>
         response.status match {
           case OK =>
@@ -107,4 +110,3 @@ trait TaxEnrolmentsConnector extends RawResponseReads with Auditable with Loggin
     }
   }
 }
-

@@ -70,7 +70,7 @@ class EtmpRegimeService @Inject()(etmpConnector: EtmpConnector,
                            businessType: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     def validateVerifier(value: Option[String]): Option[String] =
       value match {
-        case Some(x) if !x.trim().isEmpty => Some(x)
+        case Some(x) if x.trim().nonEmpty => Some(x)
         case _ => None
       }
 
@@ -83,37 +83,37 @@ class EtmpRegimeService @Inject()(etmpConnector: EtmpConnector,
                                      bcd: BusinessCustomerDetails
                                     )(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Option[BusinessPartnerDetails]] = {
 
-      getEtmpBusinessDetails(safeId) flatMap {
-        case Some(etmpRegDetails) =>
-          checkAffinityAgainstEtmpDetails(etmpRegDetails, bcd) flatMap {
-            case Some(_) =>
-              upsertAtedKnownFacts(
-                bcd.utr,
-                bcd.businessAddress.postcode.map(_.replaceAll("\\s+", "")),
-                etmpRegDetails.regimeRefNumber,
-                bcd.businessType,
-              ) map { response =>
-                response.status match {
-                  case NO_CONTENT => Some(etmpRegDetails)
-                  case status =>
-                    logger.warn(s"[EtmpRegimeService][checkEtmpBusinessPartnerExists] " +
-                      s"Failed to upsert to EACD - status: $status")
-                    None
-                }
+    getEtmpBusinessDetails(safeId) flatMap {
+      case Some(etmpRegDetails) =>
+        checkAffinityAgainstEtmpDetails(etmpRegDetails, bcd) flatMap {
+          case Some(_) =>
+            upsertAtedKnownFacts(
+              bcd.utr,
+              bcd.businessAddress.postcode.map(_.replaceAll("\\s+", "")),
+              etmpRegDetails.regimeRefNumber,
+              bcd.businessType,
+            ) map { response =>
+              response.status match {
+                case NO_CONTENT => Some(etmpRegDetails)
+                case status =>
+                  logger.warn(s"[EtmpRegimeService][checkEtmpBusinessPartnerExists] " +
+                    s"Failed to upsert to EACD - status: $status")
+                  None
               }
-            case None =>
-              Future.successful(None)
-          }
-        case None =>
-          Future.successful(None)
-      } recover {
-        case e: Exception =>
-          logger.warn(s"[EtmpRegimeService][checkEtmpBusinessPartnerExists] Failed to check ETMP api :${e.getMessage}")
-          None
-      }
+            }
+          case None =>
+            Future.successful(None)
+        }
+      case None =>
+        Future.successful(None)
+    } recover {
+      case e: Exception =>
+        logger.warn(s"[EtmpRegimeService][checkEtmpBusinessPartnerExists] Failed to check ETMP api :${e.getMessage}")
+        None
+    }
   }
 
-  def compareOptionalStrings(bcdValue: Option[String], erdValue: Option[String]): Boolean = {
+  private def compareOptionalStrings(bcdValue: Option[String], erdValue: Option[String]): Boolean = {
     if (bcdValue.isEmpty && erdValue.isEmpty) {
       true
     } else {
@@ -134,5 +134,4 @@ class EtmpRegimeService @Inject()(etmpConnector: EtmpConnector,
         false
     }
   }
-
 }

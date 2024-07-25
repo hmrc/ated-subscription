@@ -24,16 +24,17 @@ import play.api.Logging
 import play.api.http.Status._
 import play.api.libs.json.JsValue
 import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.EventTypes
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-
+import uk.gov.hmrc.http.HttpReads.Implicits._
 import scala.concurrent.{ExecutionContext, Future}
 
 class DefaultEtmpConnector @Inject()(val servicesConfig: ServicesConfig,
                                      val auditConnector: AuditConnector,
                                      val metrics: ServiceMetrics,
-                                     val http: HttpClient) extends EtmpConnector {
+                                     val http: HttpClientV2) extends EtmpConnector {
   val serviceURL: String = servicesConfig.baseUrl("etmp-hod")
   val baseURI = "annual-tax-enveloped-dwellings"
   val subscribeUri = "subscribe"
@@ -41,7 +42,7 @@ class DefaultEtmpConnector @Inject()(val servicesConfig: ServicesConfig,
   val urlHeaderAuthorization: String = s"Bearer ${servicesConfig.getConfString("etmp-hod.authorization-token", "")}"
 }
 
-trait EtmpConnector extends RawResponseReads with Auditable with Logging {
+trait EtmpConnector extends Auditable with Logging {
 
   def serviceURL: String
   def baseURI: String
@@ -49,10 +50,10 @@ trait EtmpConnector extends RawResponseReads with Auditable with Logging {
   def urlHeaderEnvironment: String
   def urlHeaderAuthorization: String
   def metrics: ServiceMetrics
-  def http: HttpClient
-  val regimeURI = "/registration/details"
+  def http: HttpClientV2
+  private val regimeURI = "/registration/details"
 
-  def createHeaders: Seq[(String, String)] = {
+  private def createHeaders: Seq[(String, String)] = {
     Seq(
       "Environment" -> urlHeaderEnvironment,
       "Authorization" -> urlHeaderAuthorization
@@ -60,31 +61,27 @@ trait EtmpConnector extends RawResponseReads with Auditable with Logging {
   }
 
   def atedRegime(safeId: String)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
-    http.GET[HttpResponse](
-      s"""$serviceURL$regimeURI?safeid=$safeId&regime=ATED""", Seq.empty, createHeaders
-    )
+    val getUrl = s"""$serviceURL$regimeURI?safeid=$safeId&regime=ATED"""
+    http.get(url"$getUrl").setHeader(createHeaders: _*).execute[HttpResponse]
   }
 
   def subscribeAted(data: JsValue)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val timerContext = metrics.startTimer(MetricsEnum.EtmpSubscribeAted)
-
-    http.POST[JsValue, HttpResponse](
-      s"$serviceURL/$baseURI/$subscribeUri", data, createHeaders
-    ) map {
-      response =>
-        timerContext.stop()
-        auditSubscribe(data, response)
-        response.status match {
-          case OK =>
-            metrics.incrementSuccessCounter(MetricsEnum.EtmpSubscribeAted)
-            response
-          case status =>
-            metrics.incrementFailedCounter(MetricsEnum.EtmpSubscribeAted)
-            doFailedAudit("subscribeAtedFailed", data.toString, response.body)
-            logger.error(s"[ETMPConnector][subscribeAted]: HttpStatus:$status :: SessionId = ${headerCarrier.sessionId} :: " +
-              s"Response from ETMP: ${response.body}")
-            response
-        }
+    val postUrl=s"$serviceURL/$baseURI/$subscribeUri"
+    http.post(url"$postUrl").withBody(data).setHeader(createHeaders: _*).execute[HttpResponse].map{ response =>
+      timerContext.stop()
+      auditSubscribe(data, response)
+      response.status match {
+        case OK =>
+          metrics.incrementSuccessCounter(MetricsEnum.EtmpSubscribeAted)
+          response
+        case status =>
+          metrics.incrementFailedCounter(MetricsEnum.EtmpSubscribeAted)
+          doFailedAudit("subscribeAtedFailed", data.toString, response.body)
+          logger.error(s"[ETMPConnector][subscribeAted]: HttpStatus:$status :: SessionId = ${headerCarrier.sessionId} :: " +
+            s"Response from ETMP: ${response.body}")
+          response
+      }
     }
   }
 

@@ -126,16 +126,13 @@ class EtmpCheckControllerISpec extends IntegrationSpec with LoginStub {
               )
           )
         )
-
         val result: WSResponse = await(hitApplicationEndpoint("/regime-etmp-check").post(inputJson))
-
         result.status mustBe OK
       }
     }
 
     "not subscribe the user for ated" when {
       "business details are not available in ETMP" in {
-
         stubFor(get(urlMatching("/registration/details\\?safeid=XE0001234567890&regime=ATED"))
           .willReturn(
             aResponse()
@@ -159,7 +156,6 @@ class EtmpCheckControllerISpec extends IntegrationSpec with LoginStub {
 
         val result: WSResponse = await(hitApplicationEndpoint("/regime-etmp-check")
           .post(inputJson))
-
         result.status mustBe NO_CONTENT
       }
     }

@@ -17,35 +17,36 @@
 package connectors
 
 import audit.Auditable
-
-import javax.inject.Inject
 import metrics.{MetricsEnum, ServiceMetrics}
 import models._
 import play.api.Logging
 import play.api.http.Status._
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.Json
 import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.{Audit, EventTypes}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import utils.GovernmentGatewayConstants
+import uk.gov.hmrc.http.HttpReads.Implicits._
 
+import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class DefaultGovernmentGatewayAdminConnector @Inject()(val servicesConfig: ServicesConfig,
                                                        val auditConnector: AuditConnector,
                                                        val metrics: ServiceMetrics,
-                                                       val http: HttpClient) extends GovernmentGatewayAdminConnector {
+                                                       val http: HttpClientV2) extends GovernmentGatewayAdminConnector {
   val serviceURL: String = servicesConfig.baseUrl("government-gateway-admin")
   val addKnownFactsURI = "known-facts"
   override val audit: Audit = new Audit("ated-subscription", auditConnector)
 }
 
-trait GovernmentGatewayAdminConnector extends RawResponseReads with Auditable with Logging {
+trait GovernmentGatewayAdminConnector extends Auditable with Logging {
 
   def serviceURL: String
   val addKnownFactsURI: String
-  val http: HttpClient
+  val http: HttpClientV2
   def metrics: ServiceMetrics
 
   def addKnownFacts(knownFacts: KnownFactsForService)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
@@ -54,7 +55,9 @@ trait GovernmentGatewayAdminConnector extends RawResponseReads with Auditable wi
     val baseUrl = s"""$serviceURL/government-gateway-admin/service"""
     val postUrl = s"""$baseUrl/${GovernmentGatewayConstants.AtedServiceName}/$addKnownFactsURI"""
     val timerContext = metrics.startTimer(MetricsEnum.GgAdminAddKnownFacts)
-    http.POST[JsValue, HttpResponse](postUrl, jsonData, Seq.empty) map {
+    http.post(url"$postUrl")
+      .withBody(jsonData)
+      .execute[HttpResponse] map{
       response =>
         timerContext.stop()
         auditAddKnownFactsCall(knownFacts, response)

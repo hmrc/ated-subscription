@@ -88,14 +88,14 @@ trait SubscribeService extends Logging {
   private def getUtrAndPostCode(data: JsValue): (Option[String], Option[String]) = {
     def getUtr: Option[String] = {
       (data \ "utr").asOpt[String] match {
-        case Some(x) if !x.trim().isEmpty => Some(x)
+        case Some(x) if x.trim().nonEmpty => Some(x)
         case _ => None
       }
     }
 
     def getPostcode: Option[String] = {
       (data \ "knownFactPostcode").asOpt[String] match {
-        case Some(x) if !x.trim().isEmpty => Some(x)
+        case Some(x) if x.trim().nonEmpty => Some(x)
         case _ => None
       }
     }

@@ -18,14 +18,11 @@ package module
 
 import connectors._
 import metrics.{DefaultServiceMetrics, ServiceMetrics}
-import play.api.inject.{Binding, Module}
+import play.api.inject.{Binding, Module, bind => playBind}
 import play.api.{Configuration, Environment}
 import services.{DefaultSubscribeService, SubscribeService}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.play.bootstrap.auth.DefaultAuthConnector
-import uk.gov.hmrc.http.HttpClient
-import uk.gov.hmrc.play.bootstrap.http.DefaultHttpClient
-import play.api.inject.{bind => playBind}
 
 class ServiceBindings extends Module {
   override def bindings(environment: Environment, configuration: Configuration): Seq[Binding[_]] =
@@ -34,7 +31,6 @@ class ServiceBindings extends Module {
       playBind(classOf[EtmpConnector]).to(classOf[DefaultEtmpConnector]),
       playBind(classOf[GovernmentGatewayAdminConnector]).to(classOf[DefaultGovernmentGatewayAdminConnector]),
       playBind(classOf[TaxEnrolmentsConnector]).to(classOf[DefaultTaxEnrolmentsConnector]),
-      playBind(classOf[HttpClient]).to(classOf[DefaultHttpClient]),
       playBind(classOf[SubscribeService]).to(classOf[DefaultSubscribeService]),
       playBind(classOf[ServiceMetrics]).to(classOf[DefaultServiceMetrics])
     )

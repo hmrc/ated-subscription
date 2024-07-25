@@ -16,8 +16,7 @@
 
 package uk.gov.hmrc.connectors
 
-import builders.TestAudit
-import connectors.TaxEnrolmentsConnector
+import connectors.{DefaultTaxEnrolmentsConnector, TaxEnrolmentsConnector}
 import metrics.ServiceMetrics
 import models.{AtedUsers, Verifier, Verifiers}
 import org.mockito.ArgumentMatchers.any
@@ -26,39 +25,30 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
-import play.api.http.Status.BAD_REQUEST
 import play.api.libs.json.{JsValue, Json}
 import play.api.test.Helpers._
 import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
-import uk.gov.hmrc.play.audit.model.Audit
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 import java.util.UUID
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
-class TaxEnrolmentsConnectorSpec extends PlaySpec with GuiceOneServerPerSuite with MockitoSugar with BeforeAndAfterEach {
+class TaxEnrolmentsConnectorSpec extends PlaySpec with GuiceOneServerPerSuite with MockitoSugar with BeforeAndAfterEach with ConnectorTest{
 
-  val mockHttp: HttpClient = mock[HttpClient]
   val mockServiceMetrics: ServiceMetrics = app.injector.instanceOf[ServiceMetrics]
   val mockServiceUrl = "tax-enrolments"
+  val mockWSHttp: HttpClientV2 = mock[HttpClientV2]
+  val auditConnector: AuditConnector = app.injector.instanceOf[AuditConnector]
+  val servicesConfig: ServicesConfig = app.injector.instanceOf[ServicesConfig]
 
-  trait Setup {
-    class TestTaxEnrolmentsConnector extends TaxEnrolmentsConnector {
-      val serviceUrl: String = mockServiceUrl
-      val enrolmentStoreProxyUrl: String = s"$serviceUrl/enrolment-store-proxy"
-      val emacBaseUrl = s"$serviceUrl/tax-enrolments"
-      override val auditConnector: AuditConnector = app.injector.instanceOf[AuditConnector]
-      override val audit: Audit = new TestAudit(auditConnector)
-      override val metrics: ServiceMetrics = mockServiceMetrics
-      override val http: HttpClient = mockHttp
-    }
-
-    val connector = new TestTaxEnrolmentsConnector
-  }
-
-  override def beforeEach(): Unit = {
-    reset(mockHttp)
+  trait Setup extends ConnectorTest{
+    val taxEnrolmentsconnector: TaxEnrolmentsConnector = new DefaultTaxEnrolmentsConnector(servicesConfig,
+      auditConnector,
+      mockServiceMetrics,
+      mockHttpClient)
   }
 
   val createVerifiers: Verifiers = Verifiers(List(Verifier("AtedReferenceNoType", "AtedReferenceNoType"),
@@ -69,48 +59,51 @@ class TaxEnrolmentsConnectorSpec extends PlaySpec with GuiceOneServerPerSuite wi
 
     "for successful set of known facts, return success" in new Setup {
       implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
-      when(mockHttp.PUT[JsValue, HttpResponse](any(),any(), any())(any(),any(),any(),any())).thenReturn(Future.successful(HttpResponse(NO_CONTENT, "")))
-      val result: Future[HttpResponse] = connector.addKnownFacts(createVerifiers, "ATED-123")
+      when(mockHttpClient.put(any())(any)).thenReturn(requestBuilder)
+      when(requestBuilderExecute[HttpResponse]).thenReturn(Future.successful(HttpResponse(NO_CONTENT, "")))
+
+      val result: Future[HttpResponse] = taxEnrolmentsconnector.addKnownFacts(createVerifiers, "ATED-123")
       await(result).status must be(NO_CONTENT)
     }
 
     "for unsuccessful set of known facts, return subscription response" in new Setup {
       implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
-      when(mockHttp.PUT[JsValue, HttpResponse](any(), any(), any())(any(), any(), any(), any())).thenReturn(Future.successful(HttpResponse(BAD_REQUEST, "")))
-      val result: Future[HttpResponse] = connector.addKnownFacts(createVerifiers, "ATED-123")
+      when(requestBuilderExecute[HttpResponse]).thenReturn(Future.successful(HttpResponse(BAD_REQUEST, "")))
+      val result: Future[HttpResponse] = taxEnrolmentsconnector.addKnownFacts(createVerifiers, "ATED-123")
       await(result).status must be(BAD_REQUEST)
     }
 
     "for successful set of Ated users, return 200 success with Non-null Ated Users list" in new Setup {
       val atedUsersList: AtedUsers = AtedUsers(List("principalUserId1"), List("delegatedId1"))
+
       implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
+
       val jsOnData: JsValue = Json.toJson(atedUsersList)
-      when(mockHttp.GET[HttpResponse](any(),any(), any())(any(),any(), any())).thenReturn(Future.successful(HttpResponse(OK, jsOnData.toString())))
-      val result: Future[Either[Int, AtedUsers]] = connector.getATEDGroups("ATED-123")
+
+      when(requestBuilderExecute[HttpResponse]).thenReturn(Future.successful(HttpResponse(OK, jsOnData.toString())))
+      val result: Future[Either[Int, AtedUsers]] = taxEnrolmentsconnector.getATEDGroups("ATED-123")
       await(result) must be(Right(atedUsersList))
     }
 
     "for successful set of Ated users, return 200 success with Nil Ated Users list" in new Setup {
       implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
-      when(mockHttp.GET[HttpResponse](any(),any(), any())(any(),any(), any())).thenReturn(Future.successful(HttpResponse(NO_CONTENT, "")))
-      val result: Future[Either[Int, AtedUsers]] = connector.getATEDGroups("ATED-123")
+      when(requestBuilderExecute[HttpResponse]).thenReturn(Future.successful(HttpResponse(NO_CONTENT, "")))
+      val result: Future[Either[Int, AtedUsers]] = taxEnrolmentsconnector.getATEDGroups("ATED-123")
       await(result) must be(Right(AtedUsers(Nil, Nil)))
     }
 
     "for BadRequest response from enrolments backend, return a Bad request response" in new Setup {
       implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
-      when(mockHttp.GET[HttpResponse](any(),any(), any())(any(),any(), any())).thenReturn(Future.successful(HttpResponse(BAD_REQUEST, "")))
-      val result: Future[Either[Int, AtedUsers]] = connector.getATEDGroups("ATED-123")
+      when(requestBuilderExecute[HttpResponse]).thenReturn(Future.successful(HttpResponse(BAD_REQUEST, "")))
+      val result: Future[Either[Int, AtedUsers]] = taxEnrolmentsconnector.getATEDGroups("ATED-123")
       await(result) must be(Left(BAD_REQUEST))
     }
 
     "for any other exception response from enrolments backend, return the same back to the caller" in new Setup {
       implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
-      when(mockHttp.GET[HttpResponse](any(),any(), any())(any(),any(), any())).thenReturn(Future.successful(HttpResponse(NOT_FOUND, "")))
-      val result: Future[Either[Int, AtedUsers]] = connector.getATEDGroups("ATED-123")
+      when(requestBuilderExecute[HttpResponse]).thenReturn(Future.successful(HttpResponse(NOT_FOUND, "")))
+      val result: Future[Either[Int, AtedUsers]] = taxEnrolmentsconnector.getATEDGroups("ATED-123")
       await(result) must be(Left(NOT_FOUND))
     }
-
   }
-
 }
