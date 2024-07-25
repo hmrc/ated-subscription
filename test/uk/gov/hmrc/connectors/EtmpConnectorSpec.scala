@@ -45,10 +45,6 @@ class EtmpConnectorSpec extends PlaySpec with ConnectorTest with GuiceOneAppPerS
     val testEtmpConnector: EtmpConnector = new DefaultEtmpConnector(servicesConfig, auditConnector, mockServiceMetrics, mockHttpClient)
   }
 
-  override def beforeEach(): Unit = {
-    reset(mockHttpClient)
-  }
-
   "DesConnector" must {
 
     val successfulSubscribeJson = Json.parse(

@@ -51,10 +51,6 @@ class TaxEnrolmentsConnectorSpec extends PlaySpec with GuiceOneServerPerSuite wi
       mockHttpClient)
   }
 
-  override def beforeEach(): Unit = {
-    reset(mockHttpClient)
-  }
-
   val createVerifiers: Verifiers = Verifiers(List(Verifier("AtedReferenceNoType", "AtedReferenceNoType"),
     Verifier("PostalCode", "PostalCode"),
     Verifier("CTUTR", "CTUTR")))

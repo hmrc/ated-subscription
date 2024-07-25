@@ -29,7 +29,7 @@ import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.{Audit, EventTypes}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import utils.GovernmentGatewayConstants
-
+import uk.gov.hmrc.http.HttpReads.Implicits._
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -43,7 +43,7 @@ class DefaultTaxEnrolmentsConnector @Inject()(val servicesConfig: ServicesConfig
   override val audit: Audit = new Audit("ated-subscription", auditConnector)
 }
 
-trait TaxEnrolmentsConnector extends RawResponseReads with Auditable with Logging {
+trait TaxEnrolmentsConnector extends Auditable with Logging {
 
   def serviceUrl: String
   def enrolmentStoreProxyUrl: String
@@ -58,7 +58,7 @@ trait TaxEnrolmentsConnector extends RawResponseReads with Auditable with Loggin
     val putUrl = s"$emacBaseUrl/$enrolmentKey"
 
     val timerContext: Timer.Context = metrics.startTimer(MetricsEnum.EmacAddKnownFacts)
-    http.put(url"""$putUrl""")
+    http.put(url"$putUrl")
       .withBody(Json.toJson(verifiers))
       .execute[HttpResponse] map {
       response =>

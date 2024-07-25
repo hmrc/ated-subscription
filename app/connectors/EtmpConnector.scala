@@ -28,7 +28,7 @@ import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.EventTypes
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-
+import uk.gov.hmrc.http.HttpReads.Implicits._
 import scala.concurrent.{ExecutionContext, Future}
 
 class DefaultEtmpConnector @Inject()(val servicesConfig: ServicesConfig,
@@ -42,7 +42,7 @@ class DefaultEtmpConnector @Inject()(val servicesConfig: ServicesConfig,
   val urlHeaderAuthorization: String = s"Bearer ${servicesConfig.getConfString("etmp-hod.authorization-token", "")}"
 }
 
-trait EtmpConnector extends RawResponseReads with Auditable with Logging {
+trait EtmpConnector extends Auditable with Logging {
 
   def serviceURL: String
   def baseURI: String

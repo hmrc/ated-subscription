@@ -45,11 +45,6 @@ class GovernmentGatewayAdminConnectorSpec extends PlaySpec with ConnectorTest wi
     val testAtedConnector: GovernmentGatewayAdminConnector = new DefaultGovernmentGatewayAdminConnector(servicesConfig, auditConnector, mockServiceMetrics, mockHttpClient)
   }
 
-
-  override def beforeEach(): Unit = {
-    reset(mockHttpClient)
-  }
-
   "GovernmentGatewayAdminConnector" must {
 
     val succesfulSubscribeJson = Json.parse(
