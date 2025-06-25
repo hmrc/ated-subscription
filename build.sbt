@@ -41,8 +41,7 @@ lazy val microservice = Project(appName, file("."))
     defaultSettings(),
   )
   .settings(
-    resolvers += Resolver.typesafeRepo("releases"),
-    resolvers += Resolver.jcenterRepo
+    resolvers += Resolver.typesafeRepo("releases")
   )
   .enablePlugins(SbtDistributablesPlugin)
   .disablePlugins(JUnitXmlReportPlugin)
