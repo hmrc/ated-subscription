@@ -57,11 +57,12 @@ trait HipConnector extends Auditable with Logging {
   def subscribeUri: String
   def metrics: ServiceMetrics
   def http: HttpClientV2
-  val clientId: String
-  val clientSecret: String
+  def clientId: String
+  def clientSecret: String
+  def authorizationToken: String = Base64.getEncoder.encodeToString(s"$clientId:$clientSecret".getBytes("UTF-8"))
   val originatingSystem: String
   val transmittingSystem: String = "HIP"
-  val authorizationToken: String = Base64.getEncoder.encodeToString(s"$clientId:$clientSecret".getBytes("UTF-8"))
+
 
   def headers: Seq[(String, String)] = Seq(
     "correlationid" -> UUID.randomUUID().toString,
