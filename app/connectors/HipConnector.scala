@@ -111,7 +111,7 @@ trait HipConnector extends Auditable with Logging {
             case status@_ =>
               metrics.incrementFailedCounter(MetricsEnum.EtmpSubscribeAted)
               doFailedAudit("subscribeAtedFailed", postUrl, response.body)
-              logger.error(s"[EtmpConnector][subscribeAted] - Unsuccessful return of data. Status code: $status")
+              logger.error(s"[HipConnector][subscribeAted] - Unsuccessful return of data. Status code: $status")
               HttpResponse(
                 status = Status.INTERNAL_SERVER_ERROR,
                 body = response.body,
@@ -121,7 +121,7 @@ trait HipConnector extends Auditable with Logging {
         case status =>
           metrics.incrementFailedCounter(MetricsEnum.EtmpSubscribeAted)
           doFailedAudit("subscribeAtedFailed", data.toString, response.body)
-          logger.error(s"[ETMPConnector][subscribeAted]: HttpStatus:$status :: SessionId = ${headerCarrier.sessionId} :: " +
+          logger.error(s"[HipConnector][subscribeAted]: HttpStatus:$status :: SessionId = ${headerCarrier.sessionId} :: " +
             s"Response from ETMP: ${response.body}")
           response
       }

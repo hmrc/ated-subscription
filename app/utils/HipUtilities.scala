@@ -25,8 +25,8 @@ object HipUtilities {
 
   lazy val logger: Logger = Logger(this.getClass)
 
-  val Success = "success"
-  val AcknowledgementReference = "acknowledgementReference"
+  val SuccessNode = "success"
+  val AcknowledgementReferenceNode = "acknowledgementReference"
   val ErrorsNode: String = "errors"
   val CodeNode: String = "code"
   val TextNode: String = "text"
@@ -42,20 +42,20 @@ object HipUtilities {
   }
 
   def removeAcknowledgementReferenceField(hipRequestPayload: JsValue): JsObject = {
-    if ((hipRequestPayload \ AcknowledgementReference).isDefined) {
-      hipRequestPayload.as[JsObject] - AcknowledgementReference
+    if ((hipRequestPayload \ AcknowledgementReferenceNode).isDefined) {
+      hipRequestPayload.as[JsObject] - AcknowledgementReferenceNode
     } else {
-      logger.warn(s"Request does not contain a '$AcknowledgementReference node.")
+      logger.warn(s"Request does not contain a '$AcknowledgementReferenceNode node.")
       hipRequestPayload.as[JsObject]
     }
   }
 
   def stripSuccessWrapper(hipResponsePayload: JsValue): JsObject = {
-    val successNodeLookup: JsLookupResult = hipResponsePayload \ Success
+    val successNodeLookup: JsLookupResult = hipResponsePayload \ SuccessNode
     if (successNodeLookup.isDefined) {
       successNodeLookup.as[JsObject]
     } else {
-      logger.warn(s"Received response does not contain a '$Success' node.")
+      logger.warn(s"Received response does not contain a '$SuccessNode' node.")
       hipResponsePayload.as[JsObject]
     }
   }
