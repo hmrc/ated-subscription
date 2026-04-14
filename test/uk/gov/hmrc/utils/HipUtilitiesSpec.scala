@@ -65,10 +65,41 @@ class HipUtilitiesSpec extends PlaySpec {
 
   "removeAcknowledgementReferenceField" must {
 
-    val inputJson: JsValue = Json.parse(
+    val inputJsonCorrectSpelling: JsValue = Json.parse(
       """
         |{
         |"acknowledgementReference":"Tp0x8ql6GldqGyGh6u36149378018603",
+        |"safeId":"XE0001234567890",
+        |"emailConsent":false,
+        |"address":[
+        | {
+        |   "name1":"Paul",
+        |    "name2":"Carrielies",
+        |    "addressDetails": {
+        |      "addressLine1": "100 SuttonStreet",
+        |      "addressLine2": "Wokingham",
+        |      "postalCode": "AB12CD",
+        |      "countryCode": "GB"
+        |    },
+        |    "contactDetails": {
+        |      "telephone": "01332752856",
+        |      "mobile": "07782565326",
+        |      "fax": "01332754256",
+        |      "email": "aa@aa.com"
+        |    }
+        | }],
+        | "utr":"12345",
+        | "businessType":"Corporate Body",
+        | "isNonUKClientRegisteredByAgent": false,
+        | "knownFactPostcode": "NE1 1EN"}
+        |
+    """.stripMargin
+    )
+
+    val inputJsonIncorrectSpelling: JsValue = Json.parse(
+      """
+        |{
+        |"acknowledgmentReference":"Tp0x8ql6GldqGyGh6u36149378018603",
         |"safeId":"XE0001234567890",
         |"emailConsent":false,
         |"address":[
@@ -126,7 +157,11 @@ class HipUtilitiesSpec extends PlaySpec {
     )
 
     "remove acknowledgementReference from input Json" in {
-      HipUtilities.removeAcknowledgementReferenceField(inputJson) shouldEqual inputJsonWithAcknowlegementReferenceRemoved
+      HipUtilities.removeAcknowledgementReferenceField(inputJsonCorrectSpelling) shouldEqual inputJsonWithAcknowlegementReferenceRemoved
+    }
+
+    "remove acknowledgmentReference from input Json" in {
+      HipUtilities.removeAcknowledgementReferenceField(inputJsonIncorrectSpelling) shouldEqual inputJsonWithAcknowlegementReferenceRemoved
     }
 
     "return unchanged Json if acknowledgementReference field is absent" in {

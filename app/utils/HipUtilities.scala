@@ -27,6 +27,7 @@ object HipUtilities {
 
   val SuccessNode = "success"
   val AcknowledgementReferenceNode = "acknowledgementReference"
+  val AcknowledgmentReferenceNode = "acknowledgmentReference"
   val ErrorsNode: String = "errors"
   val CodeNode: String = "code"
   val TextNode: String = "text"
@@ -42,10 +43,10 @@ object HipUtilities {
   }
 
   def removeAcknowledgementReferenceField(hipRequestPayload: JsValue): JsObject = {
-    if ((hipRequestPayload \ AcknowledgementReferenceNode).isDefined) {
-      hipRequestPayload.as[JsObject] - AcknowledgementReferenceNode
+    if ((hipRequestPayload \ AcknowledgementReferenceNode).isDefined || (hipRequestPayload \ AcknowledgmentReferenceNode).isDefined) {
+      hipRequestPayload.as[JsObject] - AcknowledgementReferenceNode - AcknowledgmentReferenceNode
     } else {
-      logger.warn(s"Request does not contain a '$AcknowledgementReferenceNode node.")
+      logger.warn(s"Request does not contain a '$AcknowledgementReferenceNode/$AcknowledgmentReferenceNode' node.")
       hipRequestPayload.as[JsObject]
     }
   }
