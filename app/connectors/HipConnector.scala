@@ -81,14 +81,9 @@ trait HipConnector extends Auditable with Logging {
     val timerContext = metrics.startTimer(MetricsEnum.EtmpSubscribeAted)
     val postUrl=s"$serviceUri/$baseUri/$subscribeUri"
     val withAcknowledgementReferenceRemovedJson = HipUtilities.removeAcknowledgementReferenceField(data)
-    // Log the Request Body
-    logger.warn(s"[subscribeAted] Request Body: ${Json.stringify(withAcknowledgementReferenceRemovedJson)}")
 
       http.post(url"$postUrl").withBody(withAcknowledgementReferenceRemovedJson).setHeader(headers: _*).execute[HttpResponse].map{ response =>
       timerContext.stop()
-
-        // Log the Response Body
-        logger.warn(s"[subscribeAted] Response Status: ${response.status} | Response Body: ${response.body}")
 
       auditSubscribe(withAcknowledgementReferenceRemovedJson, response)
       response.status match {
