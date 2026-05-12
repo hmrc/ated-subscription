@@ -29,6 +29,7 @@ class ServiceBindings extends Module {
     Seq(
       playBind(classOf[AuthConnector]).to(classOf[DefaultAuthConnector]),
       playBind(classOf[EtmpConnector]).to(classOf[DefaultEtmpConnector]),
+      playBind(classOf[HipConnector]).to(classOf[DefaultHipConnector]),
       playBind(classOf[GovernmentGatewayAdminConnector]).to(classOf[DefaultGovernmentGatewayAdminConnector]),
       playBind(classOf[TaxEnrolmentsConnector]).to(classOf[DefaultTaxEnrolmentsConnector]),
       playBind(classOf[SubscribeService]).to(classOf[DefaultSubscribeService]),

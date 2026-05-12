@@ -45,6 +45,7 @@ trait IntegrationApplication extends GuiceOneServerPerSuite with WireMockSupport
   override lazy val app: Application = new GuiceApplicationBuilder()
     .overrides(bind(classOf[AuthConnector]).to(classOf[DefaultAuthConnector]))
     .overrides(bind(classOf[EtmpConnector]).to(classOf[DefaultEtmpConnector]))
+    .overrides(bind(classOf[HipConnector]).to(classOf[DefaultHipConnector]))
     .overrides(bind(classOf[GovernmentGatewayAdminConnector]).to(classOf[DefaultGovernmentGatewayAdminConnector]))
     .overrides(bind(classOf[TaxEnrolmentsConnector]).to(classOf[DefaultTaxEnrolmentsConnector]))
     .overrides(bind(classOf[SubscribeService]).to(classOf[DefaultSubscribeService]))
@@ -60,6 +61,8 @@ trait IntegrationApplication extends GuiceOneServerPerSuite with WireMockSupport
       "microservice.metrics.graphite.enabled"               -> true,
       "microservice.services.etmp-hod.host"                 -> wireMockHost,
       "microservice.services.etmp-hod.port"                 -> wireMockPort,
+      "microservice.services.hip.host"                      -> wireMockHost,
+      "microservice.services.hip.port"                      -> wireMockPort,
       "microservice.services.tax-enrolments.host"           -> wireMockHost,
       "microservice.services.tax-enrolments.port"           -> wireMockPort,
       "metrics.name"                                        -> "ated-subscription",
