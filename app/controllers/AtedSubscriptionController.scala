@@ -17,26 +17,32 @@
 package controllers
 
 import javax.inject.{Inject, Singleton}
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import play.api.mvc.{Action, AnyContent, ControllerComponents, Request}
 import services.SubscribeService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
+import annotation.unused
 import scala.concurrent.ExecutionContext
 
 
 @Singleton
 class DefaultAtedSubscriptionController @Inject()(val subscribeService: SubscribeService,
-                                                  val cc: ControllerComponents)(implicit val ec: ExecutionContext) extends BackendController(cc) with AtedSubscriptionController
+                                                  val cc: ControllerComponents)(using executionContext: ExecutionContext) extends BackendController(cc) with AtedSubscriptionController {
+  override given ec: ExecutionContext = executionContext
+}
 
 @Singleton
 class AgentAtedSubscriptionController @Inject()(val subscribeService: SubscribeService,
-                                                val cc: ControllerComponents)(implicit val ec: ExecutionContext) extends BackendController(cc) with AtedSubscriptionController
+                                                val cc: ControllerComponents)(using executionContext: ExecutionContext) extends BackendController(cc) with AtedSubscriptionController {
+  override given ec: ExecutionContext = executionContext
+}
 
 trait AtedSubscriptionController extends BackendController {
-  implicit val ec: ExecutionContext
+  given ec: ExecutionContext = scala.compiletime.deferred
   def subscribeService: SubscribeService
 
-  def subscribe(orgId: String): Action[AnyContent] = Action.async { implicit request =>
+  def subscribe(@unused orgId: String): Action[AnyContent] = Action.async { request =>
+    given Request[AnyContent] = request
     val jsonData = request.body.asJson.get
     subscribeService.subscribe(jsonData) map { returnedResponse =>
       returnedResponse.status match {

@@ -21,6 +21,8 @@ import play.api.libs.json.{JsValue, Json}
 import play.api.libs.ws.WSResponse
 import com.github.tomakehurst.wiremock.client.WireMock._
 
+import play.api.libs.ws.writeableOf_JsValue
+
 class AtedSubscriptionControllerISpec extends IntegrationSpec {
 
   val inputJson: JsValue = Json.parse(

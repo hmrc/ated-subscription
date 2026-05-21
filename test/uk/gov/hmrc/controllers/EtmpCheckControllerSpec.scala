@@ -52,7 +52,7 @@ class EtmpCheckControllerSpec extends PlaySpec with MockitoSugar with TestJson w
           )
 
           when(mockEtmpRegimeService.checkEtmpBusinessPartnerExists(ArgumentMatchers.any(),
-            ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
+            ArgumentMatchers.any())(using ArgumentMatchers.any(), ArgumentMatchers.any()))
             .thenReturn(Future.successful(Some(etmpRegistrationDetails)))
 
           val result = TestEtmpCheckController.checkEtmp().apply(FakeRequest().withJsonBody(etmpCheckOrganisation))
@@ -80,7 +80,7 @@ class EtmpCheckControllerSpec extends PlaySpec with MockitoSugar with TestJson w
       "valid business customer details are received" when {
         "there aren't any ETMP registration details" in {
           when(mockEtmpRegimeService.checkEtmpBusinessPartnerExists(ArgumentMatchers.any(),
-            ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
+            ArgumentMatchers.any())(using ArgumentMatchers.any(), ArgumentMatchers.any()))
             .thenReturn(Future.successful(None))
 
           val result = TestEtmpCheckController.checkEtmp().apply(

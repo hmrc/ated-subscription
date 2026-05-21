@@ -60,17 +60,17 @@ class GovernmentGatewayAdminConnectorSpec extends PlaySpec with ConnectorTest wi
     val unsuccessfulSubscribeJson = Json.parse( """{ "Reason": "Your submission contains one or more errors." }""")
 
     "for successful set of known facts, return success" in new Setup {
-      implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
-      when(requestBuilder.execute[HttpResponse](any, any)).thenReturn(Future.successful(HttpResponse(OK, succesfulSubscribeJson.toString)))
-      val result: Future[HttpResponse] = testAtedConnector.addKnownFacts(GGBuilder.createKnownFacts("ATED", "ATED-123"))
+      given HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
+      when(requestBuilder.execute[HttpResponse](using any, any)).thenReturn(Future.successful(HttpResponse(OK, succesfulSubscribeJson.toString)))
+      val result: Future[HttpResponse] = testAtedConnector.addKnownFacts(GGBuilder.createKnownFacts("ATED-123"))
       await(result).status must be(OK)
     }
 
     "for unsuccessful set of known facts, return subscription response" in new Setup {
-      implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
-      when(requestBuilder.execute[HttpResponse](any, any)).thenReturn(Future.successful(HttpResponse(BAD_REQUEST, unsuccessfulSubscribeJson.toString)))
+      given HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
+      when(requestBuilder.execute[HttpResponse](using any, any)).thenReturn(Future.successful(HttpResponse(BAD_REQUEST, unsuccessfulSubscribeJson.toString)))
 
-      val result: Future[HttpResponse] = testAtedConnector.addKnownFacts(GGBuilder.createKnownFacts("ATED", "ATED-123"))
+      val result: Future[HttpResponse] = testAtedConnector.addKnownFacts(GGBuilder.createKnownFacts("ATED-123"))
       await(result).json must be(unsuccessfulSubscribeJson)
     }
   }

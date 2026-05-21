@@ -31,7 +31,7 @@ trait IntegrationSpec
     with IntegrationApplication
     with AssertionHelpers {
 
-  implicit val hc: HeaderCarrier = HeaderCarrier()
+  given HeaderCarrier = HeaderCarrier()
 
   val SessionId: String = s"stubbed-${UUID.randomUUID}"
   val BearerToken: String = "mock-bearer-token"
@@ -42,6 +42,6 @@ trait IntegrationSpec
     val headers = List(sessionId, authorisation)
 
     val appendSlash = if(url.startsWith("/")) url else s"/$url"
-    ws.url(s"$testAppUrl$appendSlash").withHttpHeaders(headers:_*)
+    ws.url(s"$testAppUrl$appendSlash").withHttpHeaders(headers*)
   }
 }

@@ -33,7 +33,7 @@ class EtmpRegimeService @Inject()(etmpConnector: EtmpConnector,
                                   val taxEnrolmentsConnector: TaxEnrolmentsConnector,
                                   val authConnector: AuthConnector) extends AuthorisedFunctions with Logging {
 
-  def getEtmpBusinessDetails(safeId: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[BusinessPartnerDetails]] = {
+  def getEtmpBusinessDetails(safeId: String)(using hc: HeaderCarrier, ec: ExecutionContext): Future[Option[BusinessPartnerDetails]] = {
     etmpConnector.atedRegime(safeId).map { response =>
       Try(BusinessPartnerDetails.reads.reads(response.json)) match {
         case Success(value)   => value.asOpt
@@ -46,7 +46,7 @@ class EtmpRegimeService @Inject()(etmpConnector: EtmpConnector,
 
   def checkAffinityAgainstEtmpDetails(etmpRegistrationDetails: BusinessPartnerDetails,
                                       businessCustomerDetails: BusinessCustomerDetails)
-                                     (implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[BusinessPartnerDetails]] = {
+                                     (using hc: HeaderCarrier, ec: ExecutionContext): Future[Option[BusinessPartnerDetails]] = {
     authorised(User).retrieve(Retrievals.affinityGroup){ affGroup =>
       Future(compareAffinityAgainstRegDetails(affGroup, businessCustomerDetails, etmpRegistrationDetails))
     } recover {
@@ -67,7 +67,7 @@ class EtmpRegimeService @Inject()(etmpConnector: EtmpConnector,
   def upsertAtedKnownFacts(utr: Option[String],
                            postcode: Option[String],
                            atedRefNumber: String,
-                           businessType: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+                           businessType: String)(using hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     def validateVerifier(value: Option[String]): Option[String] =
       value match {
         case Some(x) if x.trim().nonEmpty => Some(x)
@@ -81,7 +81,7 @@ class EtmpRegimeService @Inject()(etmpConnector: EtmpConnector,
 
   def checkEtmpBusinessPartnerExists(safeId: String,
                                      bcd: BusinessCustomerDetails
-                                    )(implicit ec: ExecutionContext, hc: HeaderCarrier): Future[Option[BusinessPartnerDetails]] = {
+                                    )(using ec: ExecutionContext, hc: HeaderCarrier): Future[Option[BusinessPartnerDetails]] = {
 
     getEtmpBusinessDetails(safeId) flatMap {
       case Some(etmpRegDetails) =>

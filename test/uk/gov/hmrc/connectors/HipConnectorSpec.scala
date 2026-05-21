@@ -108,8 +108,8 @@ class HipConnectorSpec extends PlaySpec with ConnectorTest with GuiceOneAppPerSu
     )
 
     "for successful subscription, return subscription response" in new Setup {
-      FeatureSwitch.enable(FeatureSwitch("hipSwitch", true))
-      implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
+      FeatureSwitch.enable(FeatureSwitch("hipSwitch"))
+      given HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
       when(requestBuilderExecute[HttpResponse]).thenReturn(Future.successful(HttpResponse(CREATED, wrappedSuccessfulSubscribeJson.toString)))
 
       val result: Future[HttpResponse] = testHipConnector.subscribeAted(inputJson)
@@ -117,18 +117,18 @@ class HipConnectorSpec extends PlaySpec with ConnectorTest with GuiceOneAppPerSu
     }
 
     "for successful subscription, return subscription response and audit international address" in new Setup {
-      FeatureSwitch.enable(FeatureSwitch("hipSwitch", true))
-      implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
-      when(requestBuilder.execute[HttpResponse](any, any)).thenReturn(Future.successful(HttpResponse(CREATED, wrappedSuccessfulSubscribeJson.toString)))
+      FeatureSwitch.enable(FeatureSwitch("hipSwitch"))
+      given HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
+      when(requestBuilder.execute[HttpResponse](using any, any)).thenReturn(Future.successful(HttpResponse(CREATED, wrappedSuccessfulSubscribeJson.toString)))
 
       val result: Future[HttpResponse] = testHipConnector.subscribeAted(inputJsonNoPostcode)
       await(result).json must be(successfulSubscribeJson)
     }
 
     "for unsuccessful subscription, return subscription response" in new Setup {
-      FeatureSwitch.enable(FeatureSwitch("hipSwitch", true))
-      implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
-      when(requestBuilder.execute[HttpResponse](any, any)).thenReturn(Future.successful(HttpResponse(BAD_REQUEST, unsuccessfulSubscribeJson.toString)))
+      FeatureSwitch.enable(FeatureSwitch("hipSwitch"))
+      given HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
+      when(requestBuilder.execute[HttpResponse](using any, any)).thenReturn(Future.successful(HttpResponse(BAD_REQUEST, unsuccessfulSubscribeJson.toString)))
 
       val result: Future[HttpResponse] = testHipConnector.subscribeAted(inputJson)
       await(result).json must be(unsuccessfulSubscribeJson)
@@ -154,7 +154,7 @@ class HipConnectorSpec extends PlaySpec with ConnectorTest with GuiceOneAppPerSu
              |}
              |""".stripMargin)
 
-        implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
+        given HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
 
         when(requestBuilderExecute[HttpResponse]).thenReturn(Future.successful(HttpResponse(UNPROCESSABLE_ENTITY, unprocessableResponse, Map.empty[String, Seq[String]])))
         val result: Future[HttpResponse] = testHipConnector.subscribeAted(inputJson)

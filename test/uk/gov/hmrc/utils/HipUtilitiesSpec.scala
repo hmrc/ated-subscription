@@ -16,10 +16,11 @@
 
 package uk.gov.hmrc.utils
 
-import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatestplus.play.PlaySpec
 import play.api.libs.json.{JsValue, Json}
 import utils.HipUtilities
+
+import org.scalatest.matchers.should.Matchers.shouldEqual
 
 class HipUtilitiesSpec extends PlaySpec {
 
