@@ -30,7 +30,6 @@ import uk.gov.hmrc.http._
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.utils.TestJson
-import utils.FeatureSwitch
 
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -108,7 +107,6 @@ class HipConnectorSpec extends PlaySpec with ConnectorTest with GuiceOneAppPerSu
     )
 
     "for successful subscription, return subscription response" in new Setup {
-      FeatureSwitch.enable(FeatureSwitch("hipSwitch", true))
       implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
       when(requestBuilderExecute[HttpResponse]).thenReturn(Future.successful(HttpResponse(CREATED, wrappedSuccessfulSubscribeJson.toString)))
 
@@ -117,7 +115,6 @@ class HipConnectorSpec extends PlaySpec with ConnectorTest with GuiceOneAppPerSu
     }
 
     "for successful subscription, return subscription response and audit international address" in new Setup {
-      FeatureSwitch.enable(FeatureSwitch("hipSwitch", true))
       implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
       when(requestBuilder.execute[HttpResponse](any, any)).thenReturn(Future.successful(HttpResponse(CREATED, wrappedSuccessfulSubscribeJson.toString)))
 
@@ -126,7 +123,6 @@ class HipConnectorSpec extends PlaySpec with ConnectorTest with GuiceOneAppPerSu
     }
 
     "for unsuccessful subscription, return subscription response" in new Setup {
-      FeatureSwitch.enable(FeatureSwitch("hipSwitch", true))
       implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
       when(requestBuilder.execute[HttpResponse](any, any)).thenReturn(Future.successful(HttpResponse(BAD_REQUEST, unsuccessfulSubscribeJson.toString)))
 
