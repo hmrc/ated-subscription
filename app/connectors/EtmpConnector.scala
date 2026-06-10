@@ -31,6 +31,9 @@ import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.http.HttpReads.Implicits._
 import scala.concurrent.{ExecutionContext, Future}
 
+
+import play.api.libs.ws.writeableOf_JsValue
+
 class DefaultEtmpConnector @Inject()(val servicesConfig: ServicesConfig,
                                      val auditConnector: AuditConnector,
                                      val metrics: ServiceMetrics,
@@ -60,15 +63,15 @@ trait EtmpConnector extends Auditable with Logging {
     )
   }
 
-  def atedRegime(safeId: String)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+  def atedRegime(safeId: String)(using headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val getUrl = s"""$serviceURL$regimeURI?safeid=$safeId&regime=ATED"""
-    http.get(url"$getUrl").setHeader(createHeaders: _*).execute[HttpResponse]
+    http.get(url"$getUrl").setHeader(createHeaders*).execute[HttpResponse]
   }
 
-  def subscribeAted(data: JsValue)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+  def subscribeAted(data: JsValue)(using headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val timerContext = metrics.startTimer(MetricsEnum.EtmpSubscribeAted)
     val postUrl=s"$serviceURL/$baseURI/$subscribeUri"
-    http.post(url"$postUrl").withBody(data).setHeader(createHeaders: _*).execute[HttpResponse].map{ response =>
+    http.post(url"$postUrl").withBody(data).setHeader(createHeaders*).execute[HttpResponse].map{ response =>
       timerContext.stop()
       auditSubscribe(data, response)
       response.status match {
@@ -85,7 +88,7 @@ trait EtmpConnector extends Auditable with Logging {
     }
   }
 
-  private def auditSubscribe(data: JsValue, response: HttpResponse)(implicit hc: HeaderCarrier, ec: ExecutionContext): Unit = {
+  private def auditSubscribe(data: JsValue, response: HttpResponse)(using hc: HeaderCarrier, ec: ExecutionContext): Unit = {
     val eventType = response.status match {
       case OK => EventTypes.Succeeded
       case _ => EventTypes.Failed

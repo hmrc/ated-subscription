@@ -18,7 +18,7 @@ package uk.gov.hmrc.controllers
 
 import controllers.StatusInfoController
 import models.{AtedUsers, BusinessPartnerDetails}
-import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
+//import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
@@ -34,13 +34,15 @@ import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 
 import scala.concurrent.{ExecutionContext, Future}
 
+import org.scalatest.matchers.should.Matchers.shouldBe
+
 class StatusInfoControllerSpec extends PlaySpec with GuiceOneServerPerSuite with MockitoSugar with BeforeAndAfterEach {
 
   val mockEnrolementService: EnrolmentService = mock[EnrolmentService]
   val mockRegimeService: EtmpRegimeService = mock[EtmpRegimeService]
   val mockAuditConnector: AuditConnector = mock[AuditConnector]
   val cc: ControllerComponents = app.injector.instanceOf[ControllerComponents]
-  implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
+  given ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
 
   object StatusInfoControllerSpec extends StatusInfoController(mockAuditConnector, mockRegimeService, mockEnrolementService, cc, "ated")
 
@@ -51,8 +53,8 @@ class StatusInfoControllerSpec extends PlaySpec with GuiceOneServerPerSuite with
         Some("testOrganisation"), "sapNumber123", "safe123",
         "regime-ref-number-123", Some("agent-ref-number-123"))
       val atedUsers = AtedUsers(List("ated-user", "principal-user-two"), List("delegated-user-one", "delegated-user-two"))
-      when(mockRegimeService.getEtmpBusinessDetails(ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Future.successful(Some(testBusinessDetails)))
-      when(mockEnrolementService.atedUsers(ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Future.successful(Right(atedUsers)))
+      when(mockRegimeService.getEtmpBusinessDetails(ArgumentMatchers.any())(using ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Future.successful(Some(testBusinessDetails)))
+      when(mockEnrolementService.atedUsers(ArgumentMatchers.any())(using ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Future.successful(Right(atedUsers)))
 
       val result = StatusInfoControllerSpec.enrolledUsers(testSafeId).apply(FakeRequest())
       status(result) shouldBe OK
@@ -62,7 +64,7 @@ class StatusInfoControllerSpec extends PlaySpec with GuiceOneServerPerSuite with
 
     "return None if a reference number doesnt exist" in {
       val testSafeId = "safeId123"
-      when(mockRegimeService.getEtmpBusinessDetails(ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Future.successful(None))
+      when(mockRegimeService.getEtmpBusinessDetails(ArgumentMatchers.any())(using ArgumentMatchers.any(), ArgumentMatchers.any())).thenReturn(Future.successful(None))
 
       val result = StatusInfoControllerSpec.enrolledUsers(testSafeId).apply(FakeRequest())
       status(result) shouldBe NOT_FOUND

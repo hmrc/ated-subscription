@@ -33,6 +33,8 @@ import uk.gov.hmrc.http.HttpReads.Implicits._
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
+import play.api.libs.ws.writeableOf_JsValue
+
 class DefaultGovernmentGatewayAdminConnector @Inject()(val servicesConfig: ServicesConfig,
                                                        val auditConnector: AuditConnector,
                                                        val metrics: ServiceMetrics,
@@ -49,7 +51,7 @@ trait GovernmentGatewayAdminConnector extends Auditable with Logging {
   val http: HttpClientV2
   def metrics: ServiceMetrics
 
-  def addKnownFacts(knownFacts: KnownFactsForService)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+  def addKnownFacts(knownFacts: KnownFactsForService)(using headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
 
     val jsonData = Json.toJson(knownFacts)
     val baseUrl = s"""$serviceURL/government-gateway-admin/service"""
@@ -74,7 +76,7 @@ trait GovernmentGatewayAdminConnector extends Auditable with Logging {
     }
   }
 
-  private def auditAddKnownFactsCall(input: KnownFactsForService, response: HttpResponse)(implicit hc: HeaderCarrier, ec: ExecutionContext): Unit = {
+  private def auditAddKnownFactsCall(input: KnownFactsForService, response: HttpResponse)(using hc: HeaderCarrier, ec: ExecutionContext): Unit = {
     val eventType = response.status match {
       case OK => EventTypes.Succeeded
       case _ => EventTypes.Failed

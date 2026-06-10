@@ -35,12 +35,14 @@ class DefaultSubscribeService @Inject()(val etmpConnector: EtmpConnector,
                                         val hipConnector: HipConnector,
                                         val ggAdminConnector: GovernmentGatewayAdminConnector,
                                         val taxEnrolmentsConnector: TaxEnrolmentsConnector,
-                                        implicit val servicesConfig: ServicesConfig) extends SubscribeService {
+                                        sc: ServicesConfig) extends SubscribeService {
   val isEmacFeatureToggle: Boolean = servicesConfig.getBoolean("emacsFeatureToggle")
+  
+  override given servicesConfig: ServicesConfig = sc
 }
 
 trait SubscribeService extends Logging {
-  implicit val servicesConfig: ServicesConfig
+  given servicesConfig: ServicesConfig
   def etmpConnector: EtmpConnector
   def hipConnector: HipConnector
   def ggAdminConnector: GovernmentGatewayAdminConnector
@@ -48,7 +50,7 @@ trait SubscribeService extends Logging {
 
   val isEmacFeatureToggle: Boolean
 
-  def subscribe(data: JsValue)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+  def subscribe(data: JsValue)(using hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     for {
       submitResponse <- if (ATEDFeatureSwitches.hipSwitch().enabled) {
         hipConnector.subscribeAted(stripJsonForEtmp(data))
@@ -61,7 +63,7 @@ trait SubscribeService extends Logging {
     }
   }
 
-  private def addKnownFacts(response: HttpResponse, data: JsValue)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+  private def addKnownFacts(response: HttpResponse, data: JsValue)(using hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val isNonUKClientRegisteredByAgent = (data \ "isNonUKClientRegisteredByAgent").asOpt[Boolean].getOrElse(false)
     (isNonUKClientRegisteredByAgent, response.status) match {
       case (false, OK) =>

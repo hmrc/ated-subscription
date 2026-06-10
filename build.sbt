@@ -3,14 +3,14 @@ import play.sbt.routes.RoutesKeys.routesGenerator
 import sbt.Keys.{parallelExecution, *}
 import sbt.{Def, *}
 import uk.gov.hmrc.DefaultBuildSettings
-import uk.gov.hmrc.DefaultBuildSettings.{defaultSettings, scalaSettings}
+import uk.gov.hmrc.DefaultBuildSettings.{defaultSettings, scalaSettings, targetJvm}
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin
 import uk.gov.hmrc.versioning.SbtGitVersioning.autoImport.majorVersion
 
 val appName: String = "ated-subscription"
 
 ThisBuild / majorVersion := 2
-ThisBuild / scalaVersion := "2.13.18"
+ThisBuild / scalaVersion := "3.3.7"
 
 lazy val appDependencies : Seq[ModuleID] = AppDependencies()
 lazy val plugins : Seq[Plugins] = Seq(play.sbt.PlayScala, SbtDistributablesPlugin)
@@ -39,6 +39,7 @@ lazy val microservice = Project(appName, file("."))
     scoverageSettings,
     scalaSettings,
     defaultSettings(),
+    targetJvm := "jvm-21"
   )
   .settings(
     resolvers += Resolver.typesafeRepo("releases")
@@ -51,6 +52,7 @@ lazy val it = project
   .dependsOn(microservice % "test->test") // the "test->test" allows reusing test code and test dependencies
   .settings(DefaultBuildSettings.itSettings())
   .settings(libraryDependencies ++= AppDependencies.itDependencies)
+  .settings(targetJvm := "jvm-21")
 
 addCommandAlias("runAllChecks", ";clean;compile;coverage;test;it/test;coverageReport")
 
