@@ -10,7 +10,7 @@ import uk.gov.hmrc.versioning.SbtGitVersioning.autoImport.majorVersion
 val appName: String = "ated-subscription"
 
 ThisBuild / majorVersion := 2
-ThisBuild / scalaVersion := "3.8.3"
+ThisBuild / scalaVersion := "3.3.7"
 
 lazy val appDependencies : Seq[ModuleID] = AppDependencies()
 lazy val plugins : Seq[Plugins] = Seq(play.sbt.PlayScala, SbtDistributablesPlugin)

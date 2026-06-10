@@ -38,7 +38,7 @@ class AgentAtedSubscriptionController @Inject()(val subscribeService: SubscribeS
 }
 
 trait AtedSubscriptionController extends BackendController {
-  given ec: ExecutionContext = scala.compiletime.deferred
+  given ec: ExecutionContext
   def subscribeService: SubscribeService
 
   def subscribe(@unused orgId: String): Action[AnyContent] = Action.async { request =>

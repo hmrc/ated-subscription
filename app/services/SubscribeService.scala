@@ -42,7 +42,7 @@ class DefaultSubscribeService @Inject()(val etmpConnector: EtmpConnector,
 }
 
 trait SubscribeService extends Logging {
-  given servicesConfig: ServicesConfig = scala.compiletime.deferred
+  given servicesConfig: ServicesConfig
   def etmpConnector: EtmpConnector
   def hipConnector: HipConnector
   def ggAdminConnector: GovernmentGatewayAdminConnector
