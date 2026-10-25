@@ -31,10 +31,10 @@ import scala.concurrent.{ExecutionContext, Future}
 trait ConnectorTest extends FutureAwaits with DefaultAwaitTimeout with MockitoSugar {
   val mockHttpClient: HttpClientV2 = mock[HttpClientV2]
   val requestBuilder: RequestBuilder = mock[RequestBuilder]
-  when(mockHttpClient.get(any[URL])(any[HeaderCarrier])).thenReturn(requestBuilder)
-  when(mockHttpClient.post(any[URL])(any[HeaderCarrier])).thenReturn(requestBuilder)
-  when(mockHttpClient.put(any[URL])(any[HeaderCarrier])).thenReturn(requestBuilder)
-  when(requestBuilder.withBody(any[JsValue])(any(), any(), any())).thenReturn(requestBuilder)
+  when(mockHttpClient.get(any[URL])(using any[HeaderCarrier])).thenReturn(requestBuilder)
+  when(mockHttpClient.post(any[URL])(using any[HeaderCarrier])).thenReturn(requestBuilder)
+  when(mockHttpClient.put(any[URL])(using any[HeaderCarrier])).thenReturn(requestBuilder)
+  when(requestBuilder.withBody(any[JsValue])(using any(), any(), any())).thenReturn(requestBuilder)
   when(requestBuilder.setHeader(any[(String, String)])).thenReturn(requestBuilder)
-  def requestBuilderExecute[A]: Future[A] = requestBuilder.execute[A](any[HttpReads[A]], any[ExecutionContext])
+  def requestBuilderExecute[A]: Future[A] = requestBuilder.execute[A](using any[HttpReads[A]], any[ExecutionContext])
 }

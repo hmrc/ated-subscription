@@ -25,7 +25,7 @@ import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.play.bootstrap.auth.DefaultAuthConnector
 
 class ServiceBindings extends Module {
-  override def bindings(environment: Environment, configuration: Configuration): Seq[Binding[_]] =
+  override def bindings(environment: Environment, configuration: Configuration): Seq[Binding[?]] =
     Seq(
       playBind(classOf[AuthConnector]).to(classOf[DefaultAuthConnector]),
       playBind(classOf[EtmpConnector]).to(classOf[DefaultEtmpConnector]),

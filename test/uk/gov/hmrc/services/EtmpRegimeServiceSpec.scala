@@ -36,8 +36,8 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson with BeforeAndAfterEach {
 
-  implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
-  implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
+  given HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
+  given ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
 
   val mockEtmpConnector: EtmpConnector = mock[EtmpConnector]
   val mockAuthConnector: AuthConnector = mock[AuthConnector]
@@ -81,7 +81,7 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
   "getEtmpBusinessDetails" should {
 
     "successfully return a regimeRefNumber" in {
-      when(mockEtmpConnector.atedRegime(ArgumentMatchers.eq(safeId))(ArgumentMatchers.any(), ArgumentMatchers.any()))
+      when(mockEtmpConnector.atedRegime(ArgumentMatchers.eq(safeId))(using ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(HttpResponse.apply(OK, etmpWithRegimeOrgResponse.toString)))
 
       val result = TestEtmpRegimeService.getEtmpBusinessDetails(safeId)
@@ -92,7 +92,7 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
     "successfully return an empty ref when no regime ref number is present" in {
       val json: JsObject = etmpWithRegimeOrgResponse.as[JsObject].-("regimeIdentifiers")
 
-      when(mockEtmpConnector.atedRegime(ArgumentMatchers.eq(safeId))(ArgumentMatchers.any(), ArgumentMatchers.any()))
+      when(mockEtmpConnector.atedRegime(ArgumentMatchers.eq(safeId))(using ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(HttpResponse.apply(OK, json.toString())))
 
       val result = TestEtmpRegimeService.getEtmpBusinessDetails(safeId)
@@ -105,11 +105,11 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
 
     "successfully return an ETMP registration" in {
       when(mockAuthConnector.authorise[Option[AffinityGroup]](ArgumentMatchers.any(),
-        ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
+        ArgumentMatchers.any())(using ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(Some(AffinityGroup.Organisation)))
-      when(mockEtmpConnector.atedRegime(ArgumentMatchers.eq(safeId))(ArgumentMatchers.any(), ArgumentMatchers.any()))
+      when(mockEtmpConnector.atedRegime(ArgumentMatchers.eq(safeId))(using ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(HttpResponse.apply(OK, etmpWithRegimeOrgResponse.toString)))
-      when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
+      when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(using ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(HttpResponse.apply(NO_CONTENT, "")))
 
       val result = TestEtmpRegimeService.checkEtmpBusinessPartnerExists(safeId, businessCustomerDetails)
@@ -119,7 +119,7 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
 
 
     "fail to return an ETMP registration when there are no regimeIdentifiers" in {
-      when(mockEtmpConnector.atedRegime(ArgumentMatchers.eq(safeId))(ArgumentMatchers.any(), ArgumentMatchers.any()))
+      when(mockEtmpConnector.atedRegime(ArgumentMatchers.eq(safeId))(using ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(HttpResponse.apply(OK, "")))
 
       val result = TestEtmpRegimeService.checkEtmpBusinessPartnerExists(safeId, businessCustomerDetails)
@@ -128,7 +128,7 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
     }
 
     "fail to return if the ETMP call throws an exception" in {
-      when(mockEtmpConnector.atedRegime(ArgumentMatchers.eq(safeId))(ArgumentMatchers.any(), ArgumentMatchers.any()))
+      when(mockEtmpConnector.atedRegime(ArgumentMatchers.eq(safeId))(using ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.failed(new RuntimeException("test")))
 
       val result = TestEtmpRegimeService.checkEtmpBusinessPartnerExists(safeId, businessCustomerDetails)
@@ -138,11 +138,11 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
 
     "fail to return an ETMP registration when upserting enrolment fails" in {
       when(mockAuthConnector.authorise[Option[AffinityGroup]](ArgumentMatchers.any(),
-        ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
+        ArgumentMatchers.any())(using ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(Some(AffinityGroup.Organisation)))
-      when(mockEtmpConnector.atedRegime(ArgumentMatchers.eq(safeId))(ArgumentMatchers.any(), ArgumentMatchers.any()))
+      when(mockEtmpConnector.atedRegime(ArgumentMatchers.eq(safeId))(using ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.successful(HttpResponse.apply(OK, etmpWithRegimeOrgResponse.toString)))
-      when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
+      when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(using ArgumentMatchers.any(), ArgumentMatchers.any()))
         .thenReturn(Future.failed(new RuntimeException("failure to return registration details")))
 
       val result = TestEtmpRegimeService.checkEtmpBusinessPartnerExists(safeId, businessCustomerDetails)
@@ -156,7 +156,7 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
 
       "the regimeRefNumber in ETMP matches the one in business matching" in {
         when(mockAuthConnector.authorise[Option[AffinityGroup]](ArgumentMatchers.any(),
-          ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
+          ArgumentMatchers.any())(using ArgumentMatchers.any(), ArgumentMatchers.any()))
           .thenReturn(Future.successful(Some(AffinityGroup.Organisation)))
 
         val result = TestEtmpRegimeService.checkAffinityAgainstEtmpDetails(
@@ -171,7 +171,7 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
 
       "ETMP does not match business details" in {
         when(mockAuthConnector.authorise[Option[AffinityGroup]](ArgumentMatchers.any(),
-          ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
+          ArgumentMatchers.any())(using ArgumentMatchers.any(), ArgumentMatchers.any()))
           .thenReturn(Future.successful(Some(AffinityGroup.Organisation)))
 
         val etmpRegistrationDetails =
@@ -206,7 +206,7 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
   }
 
   def makeBusinessCustomerDetails(businessName: String, sapNumber: String, safeId: String,
-                                  isAGroup: Boolean, agentRefNumber: Option[String]): BusinessCustomerDetails =
+                                  agentRefNumber: Option[String]): BusinessCustomerDetails =
     BusinessCustomerDetails(
       businessName,
       BusinessTypeConstants.limitedPartnership,
@@ -216,9 +216,8 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
       agentRefNumber
     )
 
-  def makeEtmpDetails(businessName: String, sapNumber: String, safeId: String, isAGroup: Boolean,
-                      regimeRefNumber: String, agentRefNumber: Option[String],
-                      firstName: Option[String], lastName: Option[String]): BusinessPartnerDetails =
+  def makeEtmpDetails(businessName: String, sapNumber: String, safeId: String,
+                      regimeRefNumber: String, agentRefNumber: Option[String]): BusinessPartnerDetails =
     BusinessPartnerDetails(
       Some(businessName),
       sapNumber,
@@ -231,29 +230,29 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
     "return true" when {
 
       "all elements match" in {
-        val bcd = makeBusinessCustomerDetails("businessName", "sapNumber", "safeId", isAGroup = true, Some("agentRef"))
-        val ecd = makeEtmpDetails("businessName", "sapNumber", "safeId", isAGroup = true, "regimeRef", Some("agentRef"), Some("first"), Some("last"))
+        val bcd = makeBusinessCustomerDetails("businessName", "sapNumber", "safeId", Some("agentRef"))
+        val ecd = makeEtmpDetails("businessName", "sapNumber", "safeId", "regimeRef", Some("agentRef"))
 
         TestEtmpRegimeService.matchOrg(bcd, ecd) must be(true)
       }
 
       "all elements match regardless of case" in {
-        val bcd = makeBusinessCustomerDetails("businessName", "SAPNUMBER", "safeId", isAGroup = true, Some("agentRef"))
-        val ecd = makeEtmpDetails("BUSINESSNAME", "sapNumber", "SAFEID", isAGroup = true, "regimeRef", Some("AGENTREF"), Some("first"), Some("LAST"))
+        val bcd = makeBusinessCustomerDetails("businessName", "SAPNUMBER", "safeId", Some("agentRef"))
+        val ecd = makeEtmpDetails("BUSINESSNAME", "sapNumber", "SAFEID", "regimeRef", Some("AGENTREF"))
 
         TestEtmpRegimeService.matchOrg(bcd, ecd) must be(true)
       }
 
       "AgentRef are both None" in {
-        val bcd = makeBusinessCustomerDetails("businessName", "sapNumber", "safeId", isAGroup = true, None)
-        val ecd = makeEtmpDetails("businessName", "sapNumber", "safeId", isAGroup = true, "regimeRef", None, Some("firstLast"), Some("lastFirst"))
+        val bcd = makeBusinessCustomerDetails("businessName", "sapNumber", "safeId", None)
+        val ecd = makeEtmpDetails("businessName", "sapNumber", "safeId", "regimeRef", None)
 
         TestEtmpRegimeService.matchOrg(bcd, ecd) must be(true)
       }
 
       "first and last name are both None" in {
-        val bcd = makeBusinessCustomerDetails("businessName", "sapNumber", "safeId", isAGroup = true, None)
-        val ecd = makeEtmpDetails("businessName", "sapNumber", "safeId", isAGroup = true, "regimeRef", None, None, None)
+        val bcd = makeBusinessCustomerDetails("businessName", "sapNumber", "safeId", None)
+        val ecd = makeEtmpDetails("businessName", "sapNumber", "safeId", "regimeRef", None)
 
         TestEtmpRegimeService.matchOrg(bcd, ecd) must be(true)
       }
@@ -261,36 +260,36 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
 
     "return false" when {
       "sapNumber does not match" in {
-        val bcd = makeBusinessCustomerDetails("businessName", "sapNumber", "safeId", isAGroup = true, Some("agentRef"))
-        val ecd = makeEtmpDetails("businessName", "sapNumberAltered", "safeId", isAGroup = true, "regimeRef", Some("agentRef"), Some("first"), Some("last"))
+        val bcd = makeBusinessCustomerDetails("businessName", "sapNumber", "safeId", Some("agentRef"))
+        val ecd = makeEtmpDetails("businessName", "sapNumberAltered", "safeId", "regimeRef", Some("agentRef"))
 
         TestEtmpRegimeService.matchOrg(bcd, ecd) must be(false)
       }
 
       "safeId and regimeRef do not match" in {
-        val bcd = makeBusinessCustomerDetails("businessName", "sapNumber", "safeIdAlt", isAGroup = true, Some("agentRef"))
-        val ecd = makeEtmpDetails("businessName", "sapNumber", "safeId", isAGroup = true, "regimeRefAlt", Some("agentRef"), Some("first"), Some("last"))
+        val bcd = makeBusinessCustomerDetails("businessName", "sapNumber", "safeIdAlt", Some("agentRef"))
+        val ecd = makeEtmpDetails("businessName", "sapNumber", "safeId", "regimeRefAlt", Some("agentRef"))
 
         TestEtmpRegimeService.matchOrg(bcd, ecd) must be(false)
       }
 
       "business name does not match" in {
-        val bcd = makeBusinessCustomerDetails("businessName", "sapNumber", "safeId", isAGroup = true, Some("agentRef"))
-        val ecd = makeEtmpDetails("businessNameDiff", "sapNumber", "safeId", isAGroup = true, "regimeRef", Some("agentRef"), Some("firstLast"), Some("lastFirst"))
+        val bcd = makeBusinessCustomerDetails("businessName", "sapNumber", "safeId", Some("agentRef"))
+        val ecd = makeEtmpDetails("businessNameDiff", "sapNumber", "safeId", "regimeRef", Some("agentRef"))
 
         TestEtmpRegimeService.matchOrg(bcd, ecd) must be(false)
       }
 
       "AgentRef does not match" in {
-        val bcd = makeBusinessCustomerDetails("businessName", "sapNumber", "safeId", isAGroup = true, Some("differentAgentRef"))
-        val ecd = makeEtmpDetails("businessName", "sapNumber", "safeId", isAGroup = true, "regimeRef", Some("agentRef"), Some("firstLast"), Some("lastFirst"))
+        val bcd = makeBusinessCustomerDetails("businessName", "sapNumber", "safeId", Some("differentAgentRef"))
+        val ecd = makeEtmpDetails("businessName", "sapNumber", "safeId", "regimeRef", Some("agentRef"))
 
         TestEtmpRegimeService.matchOrg(bcd, ecd) must be(false)
       }
 
       "first and last does not match None" in {
-        val bcd = makeBusinessCustomerDetails("businessName", "sapNumber", "safeId", isAGroup = true, Some("differentAgentRef"))
-        val ecd = makeEtmpDetails("businessName", "sapNumber", "safeId", isAGroup = true, "regimeRef", Some("agentRef"), None, None)
+        val bcd = makeBusinessCustomerDetails("businessName", "sapNumber", "safeId", Some("differentAgentRef"))
+        val ecd = makeEtmpDetails("businessName", "sapNumber", "safeId", "regimeRef", Some("agentRef"))
 
         TestEtmpRegimeService.matchOrg(bcd, ecd) must be(false)
       }
@@ -301,7 +300,7 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
     "upsert an eacd enrolment" when {
 
       "provided details to enrol for a CT business" in {
-        when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
+        when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(using ArgumentMatchers.any(), ArgumentMatchers.any()))
           .thenReturn(Future.successful(HttpResponse.apply(OK, "")))
 
         val result = TestEtmpRegimeService.upsertAtedKnownFacts(Some("UTR"), Some("postcode"), "atedRefNumber", "LTD")
@@ -310,7 +309,7 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
       }
 
       "provided details to enrol for a SOP business" in {
-        when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
+        when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(using ArgumentMatchers.any(), ArgumentMatchers.any()))
           .thenReturn(Future.successful(HttpResponse.apply(OK, "")))
 
         val result = TestEtmpRegimeService.upsertAtedKnownFacts(Some("UTR"), Some("postcode"), "atedRefNumber", "SOP")
@@ -319,7 +318,7 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
       }
 
       "provided only a tax ref" in {
-        when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
+        when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(using ArgumentMatchers.any(), ArgumentMatchers.any()))
           .thenReturn(Future.successful(HttpResponse.apply(OK, "")))
 
         val result = TestEtmpRegimeService.upsertAtedKnownFacts(Some("UTR"), None, "atedRefNumber", "LTD")
@@ -331,7 +330,7 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
     "failed to upsert eacd enrolment" when {
 
       "provided details to enrolment for LTD" in {
-        when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
+        when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(using ArgumentMatchers.any(), ArgumentMatchers.any()))
           .thenReturn(Future.failed(new RuntimeException("failed to upsert enrolment")))
 
         val result = TestEtmpRegimeService.upsertAtedKnownFacts(Some("UTR"), Some("postcode"), "atedRefNumber", "LTD")
@@ -339,7 +338,7 @@ class EtmpRegimeServiceSpec extends PlaySpec with MockitoSugar with TestJson wit
       }
 
       "provided details to enrolment for SOP" in {
-        when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(ArgumentMatchers.any(), ArgumentMatchers.any()))
+        when(mockTaxEnrolments.addKnownFacts(ArgumentMatchers.any(), ArgumentMatchers.any())(using ArgumentMatchers.any(), ArgumentMatchers.any()))
           .thenReturn(Future.failed(new RuntimeException("failed to upsert enrolment")))
 
         val result = TestEtmpRegimeService.upsertAtedKnownFacts(Some("UTR"), Some("postcode"), "atedRefNumber", "SOP")

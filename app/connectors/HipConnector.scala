@@ -37,6 +37,8 @@ import java.time.format.DateTimeFormatter
 import java.util.{Base64, UUID}
 import scala.concurrent.{ExecutionContext, Future}
 
+import play.api.libs.ws.writeableOf_JsValue
+
 class DefaultHipConnector @Inject()(val servicesConfig: ServicesConfig,
                                      val auditConnector: AuditConnector,
                                      val metrics: ServiceMetrics,
@@ -77,12 +79,12 @@ trait HipConnector extends Auditable with Logging {
     formatter.format(ZonedDateTime.now(ZoneId.of("UTC")))
   }
 
-  def subscribeAted(data: JsValue)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+  def subscribeAted(data: JsValue)(using headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val timerContext = metrics.startTimer(MetricsEnum.EtmpSubscribeAted)
     val postUrl=s"$serviceUri/$baseUri/$subscribeUri"
     val withAcknowledgementReferenceRemovedJson = HipUtilities.removeAcknowledgementReferenceField(data)
 
-      http.post(url"$postUrl").withBody(withAcknowledgementReferenceRemovedJson).setHeader(headers: _*).execute[HttpResponse].map{ response =>
+      http.post(url"$postUrl").withBody(withAcknowledgementReferenceRemovedJson).setHeader(headers*).execute[HttpResponse].map{ response =>
       timerContext.stop()
 
       auditSubscribe(withAcknowledgementReferenceRemovedJson, response)
@@ -130,7 +132,7 @@ trait HipConnector extends Auditable with Logging {
     }
   }
 
-  private def auditSubscribe(data: JsValue, response: HttpResponse)(implicit hc: HeaderCarrier, ec: ExecutionContext): Unit = {
+  private def auditSubscribe(data: JsValue, response: HttpResponse)(using hc: HeaderCarrier, ec: ExecutionContext): Unit = {
     val eventType = response.status match {
       case OK => EventTypes.Succeeded
       case _ => EventTypes.Failed

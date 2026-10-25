@@ -20,7 +20,7 @@ import javax.inject.Inject
 import models.BusinessCustomerDetails
 import play.api.Logging
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import play.api.mvc.{Action, AnyContent, ControllerComponents, Request}
 import services.EtmpRegimeService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
@@ -29,9 +29,10 @@ import scala.concurrent.{ExecutionContext, Future}
 class EtmpCheckController @Inject()(cc: ControllerComponents,
                                     etmpRegimeService: EtmpRegimeService) extends BackendController(cc) with Logging {
 
-  implicit val ec: ExecutionContext = cc.executionContext
+  given ExecutionContext = cc.executionContext
 
-  def checkEtmp(): Action[AnyContent] = Action.async { implicit request =>
+  def checkEtmp(): Action[AnyContent] = Action.async { request =>
+    given Request[AnyContent] = request
     val feJson = request.body.asJson.getOrElse(Json.obj())
     val businessCustomerDetails: Option[BusinessCustomerDetails] = Json.parse(feJson.toString()).asOpt[BusinessCustomerDetails]
 

@@ -22,7 +22,7 @@ import utils.GovernmentGatewayConstants
 
 object  GGBuilder {
 
-  def createKnownFacts(serviceName: String, atedAccountRef: String): KnownFactsForService = {
+  def createKnownFacts(atedAccountRef: String): KnownFactsForService = {
     val knownFacts = List(KnownFact(GovernmentGatewayConstants.AtedReferenceNoType, atedAccountRef))
     KnownFactsForService(knownFacts)
   }

@@ -35,17 +35,17 @@ trait Auditable {
                     path: String = "N/A",
                     tags: Map[String, String] = Map.empty[String, String],
                     detail: Map[String, String]
-                   )(implicit hc: HeaderCarrier, ec: ExecutionContext): Unit =
+                   )(using hc: HeaderCarrier, ec: ExecutionContext): Unit =
     audit.sendDataEvent(
       DataEvent(
         appName,
         auditType = transactionName,
         tags = AuditExtensions.auditHeaderCarrier(hc).toAuditTags(transactionName, path) ++ tags,
-        detail = AuditExtensions.auditHeaderCarrier(hc).toAuditDetails(detail.toSeq: _*)
+        detail = AuditExtensions.auditHeaderCarrier(hc).toAuditDetails(detail.toSeq*)
       )
     )
 
-  def doFailedAudit(auditType: String, request: String, response: String)(implicit hc:HeaderCarrier, ec: ExecutionContext): Unit = {
+  def doFailedAudit(auditType: String, request: String, response: String)(using hc:HeaderCarrier, ec: ExecutionContext): Unit = {
     val auditDetails = Map("request" -> request,
                            "response" -> response)
 
