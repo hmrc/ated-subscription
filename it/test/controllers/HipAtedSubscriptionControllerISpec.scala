@@ -21,21 +21,10 @@ import helpers.IntegrationSpec
 import play.api.libs.json.{JsValue, Json}
 import play.api.libs.ws.WSResponse
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-import utils.FeatureSwitch
 
 class HipAtedSubscriptionControllerISpec extends IntegrationSpec {
 
   implicit val servicesConfig: ServicesConfig = app.injector.instanceOf[ServicesConfig]
-
-  override def beforeAll(): Unit = {
-    super.beforeAll()
-    FeatureSwitch.enable(FeatureSwitch("hipSwitch", true))
-  }
-
-  override def afterAll(): Unit = {
-    super.afterAll()
-    FeatureSwitch.disable(FeatureSwitch("hipSwitch", false))
-  }
 
   val inputJson: JsValue = Json.parse(
     """

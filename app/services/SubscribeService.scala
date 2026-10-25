@@ -16,7 +16,7 @@
 
 package services
 
-import connectors.{EtmpConnector, GovernmentGatewayAdminConnector, HipConnector, TaxEnrolmentsConnector}
+import connectors.{GovernmentGatewayAdminConnector, HipConnector, TaxEnrolmentsConnector}
 
 import javax.inject.Inject
 import models.{KnownFact, KnownFactsForService, Verifier, Verifiers}
@@ -25,14 +25,12 @@ import play.api.http.Status._
 import play.api.libs.json.{JsObject, JsValue}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-import utils.ATEDFeatureSwitches
 import utils.BusinessTypeConstants._
 import utils.GovernmentGatewayConstants._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class DefaultSubscribeService @Inject()(val etmpConnector: EtmpConnector,
-                                        val hipConnector: HipConnector,
+class DefaultSubscribeService @Inject()(val hipConnector: HipConnector,
                                         val ggAdminConnector: GovernmentGatewayAdminConnector,
                                         val taxEnrolmentsConnector: TaxEnrolmentsConnector,
                                         implicit val servicesConfig: ServicesConfig) extends SubscribeService {
@@ -41,7 +39,6 @@ class DefaultSubscribeService @Inject()(val etmpConnector: EtmpConnector,
 
 trait SubscribeService extends Logging {
   implicit val servicesConfig: ServicesConfig
-  def etmpConnector: EtmpConnector
   def hipConnector: HipConnector
   def ggAdminConnector: GovernmentGatewayAdminConnector
   def taxEnrolmentsConnector: TaxEnrolmentsConnector
@@ -50,11 +47,7 @@ trait SubscribeService extends Logging {
 
   def subscribe(data: JsValue)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     for {
-      submitResponse <- if (ATEDFeatureSwitches.hipSwitch().enabled) {
-        hipConnector.subscribeAted(stripJsonForEtmp(data))
-      } else {
-        etmpConnector.subscribeAted(stripJsonForEtmp(data))
-      }
+      submitResponse <- hipConnector.subscribeAted(stripJsonForEtmp(data))
       _ <- addKnownFacts(submitResponse, data)
     } yield {
       submitResponse
