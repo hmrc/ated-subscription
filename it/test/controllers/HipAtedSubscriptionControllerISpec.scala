@@ -16,16 +16,16 @@
 
 package controllers
 
-import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.client.WireMock.*
 import helpers.IntegrationSpec
 import play.api.libs.json.{JsValue, Json}
-import play.api.libs.ws.WSResponse
+import play.api.libs.ws.{WSResponse, writeableOf_JsValue}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import utils.FeatureSwitch
 
 class HipAtedSubscriptionControllerISpec extends IntegrationSpec {
 
-  implicit val servicesConfig: ServicesConfig = app.injector.instanceOf[ServicesConfig]
+  given servicesConfig: ServicesConfig = app.injector.instanceOf[ServicesConfig]
 
   override def beforeAll(): Unit = {
     super.beforeAll()

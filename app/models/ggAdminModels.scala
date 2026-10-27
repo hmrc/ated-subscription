@@ -21,23 +21,23 @@ import play.api.libs.json.{Json, OFormat}
 case class Verifier(key: String, value: String)
 
 object Verifier {
-  implicit val formats: OFormat[Verifier] = Json.format[Verifier]
+  given formats: OFormat[Verifier] = Json.format[Verifier]
 }
 
 case class Verifiers(verifiers: List[Verifier])
 
 object Verifiers {
-  implicit val formats: OFormat[Verifiers] = Json.format[Verifiers]
+  given formats: OFormat[Verifiers] = Json.format[Verifiers]
 }
 
 case class KnownFact(`type`: String, value: String)
 
 object KnownFact {
-  implicit val formats: OFormat[KnownFact] = Json.format[KnownFact]
+  given formats: OFormat[KnownFact] = Json.format[KnownFact]
 }
 
 case class KnownFactsForService(facts: List[KnownFact])
 
 object KnownFactsForService {
-  implicit val formats: OFormat[KnownFactsForService] = Json.format[KnownFactsForService]
+  given formats: OFormat[KnownFactsForService] = Json.format[KnownFactsForService]
 }

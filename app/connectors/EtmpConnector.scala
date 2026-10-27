@@ -21,14 +21,15 @@ import audit.Auditable
 import javax.inject.Inject
 import metrics.{MetricsEnum, ServiceMetrics}
 import play.api.Logging
-import play.api.http.Status._
+import play.api.http.Status.*
 import play.api.libs.json.JsValue
-import uk.gov.hmrc.http._
+import play.api.libs.ws.writeableOf_JsValue
+import uk.gov.hmrc.http.*
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.EventTypes
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.HttpReads.Implicits.*
 import scala.concurrent.{ExecutionContext, Future}
 
 class DefaultEtmpConnector @Inject()(val servicesConfig: ServicesConfig,
@@ -60,12 +61,12 @@ trait EtmpConnector extends Auditable with Logging {
     )
   }
 
-  def atedRegime(safeId: String)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+  def atedRegime(safeId: String)(using headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val getUrl = s"""$serviceURL$regimeURI?safeid=$safeId&regime=ATED"""
     http.get(url"$getUrl").setHeader(createHeaders: _*).execute[HttpResponse]
   }
 
-  def subscribeAted(data: JsValue)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+  def subscribeAted(data: JsValue)(using headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val timerContext = metrics.startTimer(MetricsEnum.EtmpSubscribeAted)
     val postUrl=s"$serviceURL/$baseURI/$subscribeUri"
     http.post(url"$postUrl").withBody(data).setHeader(createHeaders: _*).execute[HttpResponse].map{ response =>
@@ -85,7 +86,7 @@ trait EtmpConnector extends Auditable with Logging {
     }
   }
 
-  private def auditSubscribe(data: JsValue, response: HttpResponse)(implicit hc: HeaderCarrier, ec: ExecutionContext): Unit = {
+  private def auditSubscribe(data: JsValue, response: HttpResponse)(using hc: HeaderCarrier, ec: ExecutionContext): Unit = {
     val eventType = response.status match {
       case OK => EventTypes.Succeeded
       case _ => EventTypes.Failed

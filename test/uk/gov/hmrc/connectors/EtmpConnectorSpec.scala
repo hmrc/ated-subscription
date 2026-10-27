@@ -19,14 +19,14 @@ package uk.gov.hmrc.connectors
 import connectors.{DefaultEtmpConnector, EtmpConnector}
 import metrics.ServiceMetrics
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito._
+import org.mockito.Mockito.*
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.Json
-import play.api.test.Helpers._
-import uk.gov.hmrc.http._
+import play.api.test.Helpers.*
+import uk.gov.hmrc.http.*
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.utils.TestJson
@@ -105,7 +105,7 @@ class EtmpConnectorSpec extends PlaySpec with ConnectorTest with GuiceOneAppPerS
     )
 
     "for successful subscription, return subscription response" in new Setup {
-      implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
+      given hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
       when(requestBuilderExecute[HttpResponse]).thenReturn(Future.successful(HttpResponse(OK, successfulSubscribeJson.toString)))
 
       val result: Future[HttpResponse] = testEtmpConnector.subscribeAted(inputJson)
@@ -113,7 +113,7 @@ class EtmpConnectorSpec extends PlaySpec with ConnectorTest with GuiceOneAppPerS
     }
 
     "for successful subscription, return subscription response and audit international address" in new Setup {
-      implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
+      given hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
       when(requestBuilder.execute[HttpResponse](any, any)).thenReturn(Future.successful(HttpResponse(OK, successfulSubscribeJson.toString)))
 
       val result: Future[HttpResponse] = testEtmpConnector.subscribeAted(inputJsonNoPostcode)
@@ -121,7 +121,7 @@ class EtmpConnectorSpec extends PlaySpec with ConnectorTest with GuiceOneAppPerS
     }
 
     "for unsuccessful subscription, return subscription response" in new Setup {
-      implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
+      given hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
       when(requestBuilder.execute[HttpResponse](any, any)).thenReturn(Future.successful(HttpResponse(BAD_REQUEST, unsuccessfulSubscribeJson.toString)))
 
       val result: Future[HttpResponse] = testEtmpConnector.subscribeAted(inputJson)
@@ -131,7 +131,7 @@ class EtmpConnectorSpec extends PlaySpec with ConnectorTest with GuiceOneAppPerS
 
   "atedRegime" should {
     "return an HttpResponse" in new Setup {
-      implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
+      given hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
       when(requestBuilder.execute[HttpResponse](any, any)).thenReturn(Future.successful(HttpResponse(OK, etmpWithRegimeOrgResponse.toString)))
 
       val result: Future[HttpResponse] = testEtmpConnector.atedRegime("SAFEID123")

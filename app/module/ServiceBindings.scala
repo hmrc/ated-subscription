@@ -16,7 +16,7 @@
 
 package module
 
-import connectors._
+import connectors.*
 import metrics.{DefaultServiceMetrics, ServiceMetrics}
 import play.api.inject.{Binding, Module, bind => playBind}
 import play.api.{Configuration, Environment}

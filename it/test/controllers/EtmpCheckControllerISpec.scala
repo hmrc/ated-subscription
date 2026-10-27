@@ -16,11 +16,11 @@
 
 package controllers
 
-import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.client.WireMock.*
 import helpers.{IntegrationSpec, LoginStub}
-import play.api.libs.json.{JsValue, Json}
-import play.api.libs.ws.WSResponse
 import play.api.http.Status.{NO_CONTENT, OK}
+import play.api.libs.json.{JsValue, Json}
+import play.api.libs.ws.{WSResponse, writeableOf_JsValue}
 
 class EtmpCheckControllerISpec extends IntegrationSpec with LoginStub {
 

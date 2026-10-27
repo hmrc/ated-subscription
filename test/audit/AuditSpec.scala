@@ -19,7 +19,7 @@ package audit
 import java.util.concurrent.ConcurrentLinkedQueue
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
-import uk.gov.hmrc.play.audit.model.Audit._
+import uk.gov.hmrc.play.audit.model.Audit.*
 import uk.gov.hmrc.play.audit.model.{Audit, AuditAsMagnet, DataEvent}
 
 import scala.concurrent.ExecutionContext
@@ -29,7 +29,7 @@ class AuditSpec(auditConnector: AuditConnector) extends Audit("test", auditConne
   var capturedInputs: Map[String, String] = Map.empty
   private val dataEvents = new ConcurrentLinkedQueue[DataEvent]
 
-  override def as[A](auditMagnet: AuditAsMagnet[A])(body: Body[A])(implicit hc: HeaderCarrier, ec: ExecutionContext): A = {
+  override def as[A](auditMagnet: AuditAsMagnet[A])(body: Body[A])(using hc: HeaderCarrier, ec: ExecutionContext): A = {
     this.capturedTxName = auditMagnet.txName
     this.capturedInputs = auditMagnet.inputs
     super.as(auditMagnet)(body)

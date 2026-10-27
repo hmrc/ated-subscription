@@ -18,6 +18,8 @@ package utils
 
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
+import scala.annotation.unused
+
 sealed trait FeatureSwitch {
   def name: String
   def enabled: Boolean
@@ -27,7 +29,7 @@ case class BooleanFeatureSwitch(name: String, enabled: Boolean) extends FeatureS
 
 object FeatureSwitch {
 
-  private[utils] def getProperty(name: String)(implicit config: ServicesConfig): FeatureSwitch = {
+  private[utils] def getProperty(name: String)(using config: ServicesConfig): FeatureSwitch = {
     val value = sys.props.get(systemPropertyName(name))
     value match {
       case Some("true") => BooleanFeatureSwitch(name, enabled = true)
@@ -35,17 +37,17 @@ object FeatureSwitch {
     }
   }
 
-  private[utils] def setProperty(name: String, value: String)(implicit config: ServicesConfig): FeatureSwitch = {
+  private[utils] def setProperty(name: String, value: String)(using config: ServicesConfig): FeatureSwitch = {
     sys.props += ((systemPropertyName(name), value))
     getProperty(name)
   }
 
   private[utils] def systemPropertyName(name: String) = s"feature.$name"
 
-  def enable(fs: FeatureSwitch)(implicit config: ServicesConfig): FeatureSwitch = setProperty(fs.name, "true")
-  def disable(fs: FeatureSwitch)(implicit config: ServicesConfig): FeatureSwitch = setProperty(fs.name, "false")
+  def enable(fs: FeatureSwitch)(using config: ServicesConfig): FeatureSwitch = setProperty(fs.name, "true")
+  def disable(fs: FeatureSwitch)(using config: ServicesConfig): FeatureSwitch = setProperty(fs.name, "false")
 
-  def apply(name: String, enabled: Boolean = false)(implicit config: ServicesConfig): FeatureSwitch = getProperty(name)
+  def apply(name: String,@unused enabled: Boolean = false)(using config: ServicesConfig): FeatureSwitch = getProperty(name)
   def unapply(fs: FeatureSwitch): Option[(String, Boolean)] = Some(fs.name -> fs.enabled)
 }
 
@@ -53,9 +55,9 @@ object ATEDFeatureSwitches extends ATEDFeatureSwitches
 
 trait ATEDFeatureSwitches {
 
-  def hipSwitch()(implicit config: ServicesConfig): FeatureSwitch = FeatureSwitch.getProperty("hipSwitch")
+  def hipSwitch()(using config: ServicesConfig): FeatureSwitch = FeatureSwitch.getProperty("hipSwitch")
 
-  def apply(name: String)(implicit config: ServicesConfig): Option[FeatureSwitch] = name match {
+  def apply(name: String)(using config: ServicesConfig): Option[FeatureSwitch] = name match {
     case "hipSwitch" => Some(hipSwitch())
     case _ => None
   }

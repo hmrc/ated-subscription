@@ -19,10 +19,12 @@ package builders
 import models.{KnownFact, KnownFactsForService}
 import utils.GovernmentGatewayConstants
 
+import scala.annotation.unused
+
 
 object  GGBuilder {
 
-  def createKnownFacts(serviceName: String, atedAccountRef: String): KnownFactsForService = {
+  def createKnownFacts(@unused serviceName: String, atedAccountRef: String): KnownFactsForService = {
     val knownFacts = List(KnownFact(GovernmentGatewayConstants.AtedReferenceNoType, atedAccountRef))
     KnownFactsForService(knownFacts)
   }

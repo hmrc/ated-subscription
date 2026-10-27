@@ -21,13 +21,13 @@ import connectors.{EtmpConnector, GovernmentGatewayAdminConnector, HipConnector,
 import javax.inject.Inject
 import models.{KnownFact, KnownFactsForService, Verifier, Verifiers}
 import play.api.Logging
-import play.api.http.Status._
+import play.api.http.Status.*
 import play.api.libs.json.{JsObject, JsValue}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import utils.ATEDFeatureSwitches
-import utils.BusinessTypeConstants._
-import utils.GovernmentGatewayConstants._
+import utils.BusinessTypeConstants.*
+import utils.GovernmentGatewayConstants.*
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -35,12 +35,12 @@ class DefaultSubscribeService @Inject()(val etmpConnector: EtmpConnector,
                                         val hipConnector: HipConnector,
                                         val ggAdminConnector: GovernmentGatewayAdminConnector,
                                         val taxEnrolmentsConnector: TaxEnrolmentsConnector,
-                                        implicit val servicesConfig: ServicesConfig) extends SubscribeService {
+                                        val servicesConfig: ServicesConfig) extends SubscribeService {
   val isEmacFeatureToggle: Boolean = servicesConfig.getBoolean("emacsFeatureToggle")
 }
 
 trait SubscribeService extends Logging {
-  implicit val servicesConfig: ServicesConfig
+  given servicesConfig: ServicesConfig
   def etmpConnector: EtmpConnector
   def hipConnector: HipConnector
   def ggAdminConnector: GovernmentGatewayAdminConnector
@@ -48,7 +48,7 @@ trait SubscribeService extends Logging {
 
   val isEmacFeatureToggle: Boolean
 
-  def subscribe(data: JsValue)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+  def subscribe(data: JsValue)(using hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     for {
       submitResponse <- if (ATEDFeatureSwitches.hipSwitch().enabled) {
         hipConnector.subscribeAted(stripJsonForEtmp(data))
@@ -61,7 +61,7 @@ trait SubscribeService extends Logging {
     }
   }
 
-  private def addKnownFacts(response: HttpResponse, data: JsValue)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+  private def addKnownFacts(response: HttpResponse, data: JsValue)(using hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val isNonUKClientRegisteredByAgent = (data \ "isNonUKClientRegisteredByAgent").asOpt[Boolean].getOrElse(false)
     (isNonUKClientRegisteredByAgent, response.status) match {
       case (false, OK) =>
