@@ -19,7 +19,7 @@ package uk.gov.hmrc.models
 import models.{Address, BusinessCustomerDetails, BusinessPartnerDetails}
 import org.scalatestplus.play.PlaySpec
 import play.api.libs.json.{JsObject, JsSuccess, Json}
-import play.api.libs.json._
+import play.api.libs.json.*
 import uk.gov.hmrc.utils.TestJson
 
 class SubscriptionDataModelSpec extends PlaySpec with TestJson {

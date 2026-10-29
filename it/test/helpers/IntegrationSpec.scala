@@ -17,7 +17,7 @@
 package helpers
 
 import helpers.application.IntegrationApplication
-import org.scalatest._
+import org.scalatest.*
 import org.scalatestplus.play.PlaySpec
 import play.api.libs.ws.WSRequest
 import uk.gov.hmrc.http.{HeaderCarrier, HeaderNames}
@@ -31,7 +31,7 @@ trait IntegrationSpec
     with IntegrationApplication
     with AssertionHelpers {
 
-  implicit val hc: HeaderCarrier = HeaderCarrier()
+  given hc: HeaderCarrier = HeaderCarrier()
 
   val SessionId: String = s"stubbed-${UUID.randomUUID}"
   val BearerToken: String = "mock-bearer-token"

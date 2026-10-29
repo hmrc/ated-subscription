@@ -22,6 +22,6 @@ case class AtedUsers(principalGroupIds: List[String], delegatedGroupIds: List[St
 
 
 object AtedUsers {
-  implicit val format: OFormat[AtedUsers] = Json.format[AtedUsers]
+  given format: OFormat[AtedUsers] = Json.format[AtedUsers]
 }
 

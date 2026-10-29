@@ -20,14 +20,14 @@ import builders.GGBuilder
 import connectors.{DefaultGovernmentGatewayAdminConnector, GovernmentGatewayAdminConnector}
 import metrics.ServiceMetrics
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito._
+import org.mockito.Mockito.*
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.Json
-import play.api.test.Helpers._
-import uk.gov.hmrc.http._
+import play.api.test.Helpers.*
+import uk.gov.hmrc.http.*
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
@@ -60,14 +60,14 @@ class GovernmentGatewayAdminConnectorSpec extends PlaySpec with ConnectorTest wi
     val unsuccessfulSubscribeJson = Json.parse( """{ "Reason": "Your submission contains one or more errors." }""")
 
     "for successful set of known facts, return success" in new Setup {
-      implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
+      given hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
       when(requestBuilder.execute[HttpResponse](any, any)).thenReturn(Future.successful(HttpResponse(OK, succesfulSubscribeJson.toString)))
       val result: Future[HttpResponse] = testAtedConnector.addKnownFacts(GGBuilder.createKnownFacts("ATED", "ATED-123"))
       await(result).status must be(OK)
     }
 
     "for unsuccessful set of known facts, return subscription response" in new Setup {
-      implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
+      given hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
       when(requestBuilder.execute[HttpResponse](any, any)).thenReturn(Future.successful(HttpResponse(BAD_REQUEST, unsuccessfulSubscribeJson.toString)))
 
       val result: Future[HttpResponse] = testAtedConnector.addKnownFacts(GGBuilder.createKnownFacts("ATED", "ATED-123"))

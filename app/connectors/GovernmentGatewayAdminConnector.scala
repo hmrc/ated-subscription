@@ -18,17 +18,18 @@ package connectors
 
 import audit.Auditable
 import metrics.{MetricsEnum, ServiceMetrics}
-import models._
+import models.*
 import play.api.Logging
-import play.api.http.Status._
+import play.api.http.Status.*
 import play.api.libs.json.Json
-import uk.gov.hmrc.http._
+import play.api.libs.ws.writeableOf_JsValue
+import uk.gov.hmrc.http.*
+import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.{Audit, EventTypes}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import utils.GovernmentGatewayConstants
-import uk.gov.hmrc.http.HttpReads.Implicits._
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -49,7 +50,7 @@ trait GovernmentGatewayAdminConnector extends Auditable with Logging {
   val http: HttpClientV2
   def metrics: ServiceMetrics
 
-  def addKnownFacts(knownFacts: KnownFactsForService)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+  def addKnownFacts(knownFacts: KnownFactsForService)(using headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
 
     val jsonData = Json.toJson(knownFacts)
     val baseUrl = s"""$serviceURL/government-gateway-admin/service"""
@@ -74,7 +75,7 @@ trait GovernmentGatewayAdminConnector extends Auditable with Logging {
     }
   }
 
-  private def auditAddKnownFactsCall(input: KnownFactsForService, response: HttpResponse)(implicit hc: HeaderCarrier, ec: ExecutionContext): Unit = {
+  private def auditAddKnownFactsCall(input: KnownFactsForService, response: HttpResponse)(using hc: HeaderCarrier, ec: ExecutionContext): Unit = {
     val eventType = response.status match {
       case OK => EventTypes.Succeeded
       case _ => EventTypes.Failed

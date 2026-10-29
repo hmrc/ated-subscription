@@ -19,17 +19,18 @@ package connectors
 import audit.Auditable
 import com.codahale.metrics.Timer
 import metrics.{MetricsEnum, ServiceMetrics}
-import models._
+import models.*
 import play.api.Logging
-import play.api.http.Status._
+import play.api.http.Status.*
 import play.api.libs.json.Json
-import uk.gov.hmrc.http._
+import play.api.libs.ws.writeableOf_JsValue
+import uk.gov.hmrc.http.*
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.audit.model.{Audit, EventTypes}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import utils.GovernmentGatewayConstants
-import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.HttpReads.Implicits.*
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -51,7 +52,7 @@ trait TaxEnrolmentsConnector extends Auditable with Logging {
   def metrics: ServiceMetrics
   def http: HttpClientV2
 
-  def addKnownFacts(verifiers: Verifiers, atedRefNo: String)(implicit headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+  def addKnownFacts(verifiers: Verifiers, atedRefNo: String)(using headerCarrier: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
 
     val atedRefIdentifier = "ATEDRefNumber"
     val enrolmentKey = s"${GovernmentGatewayConstants.AtedServiceName}~$atedRefIdentifier~$atedRefNo"
@@ -77,7 +78,7 @@ trait TaxEnrolmentsConnector extends Auditable with Logging {
     }
   }
 
-  private def auditAddKnownFacts(putUrl: String, verifiers: Verifiers, response: HttpResponse)(implicit hc: HeaderCarrier, ec: ExecutionContext): Unit = {
+  private def auditAddKnownFacts(putUrl: String, verifiers: Verifiers, response: HttpResponse)(using hc: HeaderCarrier, ec: ExecutionContext): Unit = {
     val status = response.status match {
       case NO_CONTENT => EventTypes.Succeeded
       case _ => EventTypes.Failed
@@ -92,7 +93,7 @@ trait TaxEnrolmentsConnector extends Auditable with Logging {
         "status" -> s"$status"))
   }
 
-  def getATEDGroups(atedRef: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Either[Int, AtedUsers]] = {
+  def getATEDGroups(atedRef: String)(using hc: HeaderCarrier, ec: ExecutionContext): Future[Either[Int, AtedUsers]] = {
 
     val url = url"""$enrolmentStoreProxyUrl/enrolment-store-proxy/enrolment-store/enrolments/HMRC-ATED-ORG~ATEDRefNumber~$atedRef/groups?ignore-assignments=true"""
     http.get(url).execute[HttpResponse].map{

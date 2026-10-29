@@ -19,7 +19,7 @@ package controllers
 import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
-import services._
+import services.*
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
@@ -30,7 +30,7 @@ class StatusInfoController @Inject()(val auditConnector: AuditConnector,
                                      val etmpRegimeService: EtmpRegimeService,
                                      val enrolmentService: EnrolmentService,
                                      cc: ControllerComponents,
-                                     @Named("appName") val appName: String)(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
+                                     @Named("appName") val appName: String)(using ec: ExecutionContext) extends BackendController(cc) with Logging {
 
   def enrolledUsers(safeID: String): Action[AnyContent] = Action.async { implicit request =>
     etmpRegimeService.getEtmpBusinessDetails(safeID).flatMap {

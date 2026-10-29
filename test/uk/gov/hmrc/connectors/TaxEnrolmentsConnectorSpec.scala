@@ -20,14 +20,14 @@ import connectors.{DefaultTaxEnrolmentsConnector, TaxEnrolmentsConnector}
 import metrics.ServiceMetrics
 import models.{AtedUsers, Verifier, Verifiers}
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito._
+import org.mockito.Mockito.*
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.libs.json.{JsValue, Json}
-import play.api.test.Helpers._
-import uk.gov.hmrc.http._
+import play.api.test.Helpers.*
+import uk.gov.hmrc.http.*
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
@@ -58,7 +58,7 @@ class TaxEnrolmentsConnectorSpec extends PlaySpec with GuiceOneServerPerSuite wi
   "TaxEnrolmentsConnector" must {
 
     "for successful set of known facts, return success" in new Setup {
-      implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
+      given hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
       when(mockHttpClient.put(any())(any)).thenReturn(requestBuilder)
       when(requestBuilderExecute[HttpResponse]).thenReturn(Future.successful(HttpResponse(NO_CONTENT, "")))
 
@@ -67,7 +67,7 @@ class TaxEnrolmentsConnectorSpec extends PlaySpec with GuiceOneServerPerSuite wi
     }
 
     "for unsuccessful set of known facts, return subscription response" in new Setup {
-      implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
+      given hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
       when(requestBuilderExecute[HttpResponse]).thenReturn(Future.successful(HttpResponse(BAD_REQUEST, "")))
       val result: Future[HttpResponse] = taxEnrolmentsconnector.addKnownFacts(createVerifiers, "ATED-123")
       await(result).status must be(BAD_REQUEST)
@@ -76,7 +76,7 @@ class TaxEnrolmentsConnectorSpec extends PlaySpec with GuiceOneServerPerSuite wi
     "for successful set of Ated users, return 200 success with Non-null Ated Users list" in new Setup {
       val atedUsersList: AtedUsers = AtedUsers(List("principalUserId1"), List("delegatedId1"))
 
-      implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
+      given hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
 
       val jsOnData: JsValue = Json.toJson(atedUsersList)
 
@@ -86,21 +86,21 @@ class TaxEnrolmentsConnectorSpec extends PlaySpec with GuiceOneServerPerSuite wi
     }
 
     "for successful set of Ated users, return 200 success with Nil Ated Users list" in new Setup {
-      implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
+      given hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
       when(requestBuilderExecute[HttpResponse]).thenReturn(Future.successful(HttpResponse(NO_CONTENT, "")))
       val result: Future[Either[Int, AtedUsers]] = taxEnrolmentsconnector.getATEDGroups("ATED-123")
       await(result) must be(Right(AtedUsers(Nil, Nil)))
     }
 
     "for BadRequest response from enrolments backend, return a Bad request response" in new Setup {
-      implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
+      given hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
       when(requestBuilderExecute[HttpResponse]).thenReturn(Future.successful(HttpResponse(BAD_REQUEST, "")))
       val result: Future[Either[Int, AtedUsers]] = taxEnrolmentsconnector.getATEDGroups("ATED-123")
       await(result) must be(Left(BAD_REQUEST))
     }
 
     "for any other exception response from enrolments backend, return the same back to the caller" in new Setup {
-      implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
+      given hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
       when(requestBuilderExecute[HttpResponse]).thenReturn(Future.successful(HttpResponse(NOT_FOUND, "")))
       val result: Future[Either[Int, AtedUsers]] = taxEnrolmentsconnector.getATEDGroups("ATED-123")
       await(result) must be(Left(NOT_FOUND))

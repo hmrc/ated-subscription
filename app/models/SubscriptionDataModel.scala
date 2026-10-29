@@ -16,7 +16,7 @@
 
 package models
 
-import play.api.libs.json._
+import play.api.libs.json.*
 
 case class BusinessPartnerDetails(
                                     organisationName: Option[String],
@@ -58,7 +58,7 @@ case class Address(
                   )
 
 object Address {
-  implicit val formats: OFormat[Address] = Json.format[Address]
+  given formats: OFormat[Address] = Json.format[Address]
 }
 
 case class BusinessCustomerDetails(
@@ -71,5 +71,5 @@ case class BusinessCustomerDetails(
                                     utr: Option[String] = None)
 
 object BusinessCustomerDetails {
-  implicit val format: OFormat[BusinessCustomerDetails] = Json.format[BusinessCustomerDetails]
+  given format: OFormat[BusinessCustomerDetails] = Json.format[BusinessCustomerDetails]
 }

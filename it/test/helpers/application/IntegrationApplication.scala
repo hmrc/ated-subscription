@@ -16,7 +16,7 @@
 
 package helpers.application
 
-import connectors._
+import connectors.*
 import metrics.{DefaultServiceMetrics, ServiceMetrics}
 import org.scalatest.TestSuite
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite

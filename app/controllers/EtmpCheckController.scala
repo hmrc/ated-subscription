@@ -29,7 +29,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class EtmpCheckController @Inject()(cc: ControllerComponents,
                                     etmpRegimeService: EtmpRegimeService) extends BackendController(cc) with Logging {
 
-  implicit val ec: ExecutionContext = cc.executionContext
+  given ec: ExecutionContext = cc.executionContext
 
   def checkEtmp(): Action[AnyContent] = Action.async { implicit request =>
     val feJson = request.body.asJson.getOrElse(Json.obj())

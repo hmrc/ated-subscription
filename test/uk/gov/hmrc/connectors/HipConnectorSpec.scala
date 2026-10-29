@@ -19,14 +19,14 @@ package uk.gov.hmrc.connectors
 import connectors.{DefaultHipConnector, HipConnector}
 import metrics.ServiceMetrics
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito._
+import org.mockito.Mockito.*
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.libs.json.Json
-import play.api.test.Helpers._
-import uk.gov.hmrc.http._
+import play.api.test.Helpers.*
+import uk.gov.hmrc.http.*
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 import uk.gov.hmrc.utils.TestJson
@@ -40,7 +40,7 @@ class HipConnectorSpec extends PlaySpec with ConnectorTest with GuiceOneAppPerSu
 
   val mockServiceMetrics: ServiceMetrics = app.injector.instanceOf[ServiceMetrics]
   val auditConnector: AuditConnector = app.injector.instanceOf[AuditConnector]
-  implicit val servicesConfig: ServicesConfig = app.injector.instanceOf[ServicesConfig]
+  given servicesConfig: ServicesConfig = app.injector.instanceOf[ServicesConfig]
 
   class Setup extends ConnectorTest {
     val testHipConnector: HipConnector = new DefaultHipConnector(servicesConfig, auditConnector, mockServiceMetrics, mockHttpClient)
@@ -109,7 +109,7 @@ class HipConnectorSpec extends PlaySpec with ConnectorTest with GuiceOneAppPerSu
 
     "for successful subscription, return subscription response" in new Setup {
       FeatureSwitch.enable(FeatureSwitch("hipSwitch", true))
-      implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
+      given hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
       when(requestBuilderExecute[HttpResponse]).thenReturn(Future.successful(HttpResponse(CREATED, wrappedSuccessfulSubscribeJson.toString)))
 
       val result: Future[HttpResponse] = testHipConnector.subscribeAted(inputJson)
@@ -118,7 +118,7 @@ class HipConnectorSpec extends PlaySpec with ConnectorTest with GuiceOneAppPerSu
 
     "for successful subscription, return subscription response and audit international address" in new Setup {
       FeatureSwitch.enable(FeatureSwitch("hipSwitch", true))
-      implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
+      given hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
       when(requestBuilder.execute[HttpResponse](any, any)).thenReturn(Future.successful(HttpResponse(CREATED, wrappedSuccessfulSubscribeJson.toString)))
 
       val result: Future[HttpResponse] = testHipConnector.subscribeAted(inputJsonNoPostcode)
@@ -127,7 +127,7 @@ class HipConnectorSpec extends PlaySpec with ConnectorTest with GuiceOneAppPerSu
 
     "for unsuccessful subscription, return subscription response" in new Setup {
       FeatureSwitch.enable(FeatureSwitch("hipSwitch", true))
-      implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
+      given hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
       when(requestBuilder.execute[HttpResponse](any, any)).thenReturn(Future.successful(HttpResponse(BAD_REQUEST, unsuccessfulSubscribeJson.toString)))
 
       val result: Future[HttpResponse] = testHipConnector.subscribeAted(inputJson)
@@ -154,7 +154,7 @@ class HipConnectorSpec extends PlaySpec with ConnectorTest with GuiceOneAppPerSu
              |}
              |""".stripMargin)
 
-        implicit val hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
+        given hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId(s"session-${UUID.randomUUID}")))
 
         when(requestBuilderExecute[HttpResponse]).thenReturn(Future.successful(HttpResponse(UNPROCESSABLE_ENTITY, unprocessableResponse, Map.empty[String, Seq[String]])))
         val result: Future[HttpResponse] = testHipConnector.subscribeAted(inputJson)
